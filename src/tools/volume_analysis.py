@@ -266,3 +266,4 @@ async def get_volume_analysis(args: dict[str, Any]) -> dict[str, Any]:
     except Exception as e:
         raise NetworkError(f"Gagal melakukan analisis volume: {str(e)}")
 
+
