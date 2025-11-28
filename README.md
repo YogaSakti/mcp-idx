@@ -250,45 +250,23 @@ Bandingkan performa beberapa saham.
 Harga untuk multiple tickers sekaligus.
 - `tickers` (required): List ticker saham
 
-### 9. `get_financial_ratios`
+### 12. `get_financial_ratios`
 Analisis rasio keuangan fundamental lengkap.
 - `ticker` (required): Ticker saham IDX
 - Menghitung: P/E, P/B, P/S, ROE, ROA, Debt-to-Equity, Current Ratio, Quick Ratio, Dividend Yield, Growth metrics, dll
 - Termasuk interpretasi untuk setiap ratio dan financial score
 
-### 10. `get_volume_analysis`
+### 13. `get_volume_analysis`
 Analisis volume trading saham.
 - `ticker` (required): Ticker saham IDX
 - `period` (optional): Periode analisis (7d, 30d, 90d, 1mo, 3mo, 6mo, 1y) - default: 30d
 - Menghitung: Average volume, volume spikes, volume trend, volume-price correlation, unusual volume detection
 
-### 11. `get_volatility_analysis`
+### 14. `get_volatility_analysis`
 Analisis volatilitas saham.
 - `ticker` (required): Ticker saham IDX
 - `period` (optional): Periode analisis (30d, 90d, 1y, 2y) - default: 1y
 - Menghitung: Historical volatility (30d, 90d, 1y), Beta vs IHSG, ATR-based volatility, Risk level assessment
-
-### 12. `get_fibonacci_levels`
-Hitung Fibonacci retracement dan extension levels.
-- `ticker` (required): Ticker saham IDX
-- `period` (optional): Periode untuk swing detection (default: 3mo)
-- `trend` (optional): auto, uptrend, downtrend (default: auto)
-- Menghitung: 7 retracement levels (23.6% - 100%), 3 extension levels, current price position, trading insights
-
-### 13. `get_ma_crossovers`
-Deteksi Moving Average crossover signals.
-- `ticker` (required): Ticker saham IDX
-- `period` (optional): Periode analisis (default: 1y)
-- `lookback` (optional): Jumlah hari untuk cek crossover (default: 10)
-- Menghitung: Golden Cross/Death Cross (SMA 50/200), EMA 12/26 crossovers, current MA alignment
-
-### 14. `get_candlestick_patterns`
-Deteksi candlestick patterns untuk trading signals.
-- `ticker` (required): Ticker saham IDX
-- `period` (optional): Periode analisis (default: 1mo)
-- `lookback` (optional): Jumlah candle terakhir untuk scan (default: 10)
-- Patterns: Doji, Hammer, Shooting Star, Engulfing, Morning/Evening Star, Harami
-- Termasuk: Pattern strength rating, signal classification, confidence score
 
 ## 💬 Usage Examples
 
@@ -359,24 +337,42 @@ mcp-idx/
 ├── src/
 │   ├── server.py              # MCP server utama
 │   ├── server_http.py         # HTTP server (optional)
-│   ├── tools/                 # Tool implementations
-│   │   ├── price.py
-│   │   ├── historical.py
-│   │   ├── indicators.py
-│   │   ├── info.py
-│   │   ├── search.py
-│   │   ├── market.py
-│   │   ├── compare.py
-│   │   └── watchlist.py
+│   ├── tools/                 # Tool implementations (14 tools)
+│   │   ├── price.py           # Current price
+│   │   ├── info.py            # Stock info
+│   │   ├── historical.py      # OHLCV data
+│   │   ├── indicators.py      # Technical indicators (RSI, MACD, ADX, Ichimoku, dll)
+│   │   ├── fibonacci.py       # Fibonacci levels
+│   │   ├── ma_crossover.py    # MA crossover detection
+│   │   ├── candlestick.py     # Candlestick patterns
+│   │   ├── financial_ratios.py # Fundamental ratios
+│   │   ├── volume_analysis.py  # Volume analysis
+│   │   ├── volatility_analysis.py # Volatility metrics
+│   │   ├── search.py          # Stock search
+│   │   ├── market.py          # Market summary
+│   │   ├── compare.py         # Stock comparison
+│   │   └── watchlist.py       # Watchlist prices
 │   ├── utils/                 # Utilities
-│   │   ├── yahoo.py
-│   │   ├── helpers.py
-│   │   ├── cache.py
-│   │   └── validators.py
+│   │   ├── yahoo.py           # Yahoo Finance wrapper
+│   │   ├── helpers.py         # Helper functions
+│   │   ├── cache.py           # Caching layer
+│   │   ├── validators.py      # Input validation
+│   │   └── exceptions.py      # Custom exceptions
 │   └── config/                # Configuration
-│       ├── settings.py
-│       └── tickers.json
-├── tests/                     # Test suite
+│       ├── settings.py        # Settings
+│       └── tickers.json       # IDX tickers
+├── tests/                     # Test suite (11 test files)
+│   ├── test_price.py
+│   ├── test_validators.py
+│   ├── test_helpers.py
+│   ├── test_adx.py
+│   ├── test_fibonacci.py
+│   ├── test_ichimoku.py
+│   ├── test_ma_crossover.py
+│   ├── test_candlestick.py
+│   ├── test_financial_ratios.py
+│   ├── test_volume_analysis.py
+│   └── test_volatility_analysis.py
 ├── requirements.txt
 ├── pyproject.toml
 ├── README.md
