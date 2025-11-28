@@ -14,6 +14,7 @@ from src.tools.info import get_stock_info_tool, get_stock_info
 from src.tools.historical import get_historical_data_tool, get_historical_data
 from src.tools.indicators import get_technical_indicators_tool, get_technical_indicators
 from src.tools.fibonacci import get_fibonacci_levels_tool, get_fibonacci_levels
+from src.tools.ma_crossover import get_ma_crossover_tool, get_ma_crossovers
 from src.tools.search import get_search_stocks_tool, search_stocks
 from src.tools.market import get_market_summary_tool, get_market_summary
 from src.tools.compare import get_compare_stocks_tool, compare_stocks
@@ -46,6 +47,7 @@ async def handle_list_tools() -> list[Tool]:
         get_historical_data_tool(),
         get_technical_indicators_tool(),
         get_fibonacci_levels_tool(),
+        get_ma_crossover_tool(),
         get_search_stocks_tool(),
         get_market_summary_tool(),
         get_compare_stocks_tool(),
@@ -66,6 +68,7 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
             "get_historical_data": get_historical_data,
             "get_technical_indicators": get_technical_indicators,
             "get_fibonacci_levels": get_fibonacci_levels,
+            "get_ma_crossovers": get_ma_crossovers,
             "search_stocks": search_stocks,
             "get_market_summary": get_market_summary,
             "compare_stocks": compare_stocks,
