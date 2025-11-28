@@ -119,6 +119,7 @@ Restart aplikasi AI client kamu. Server akan start otomatis saat AI client terhu
 - 📊 **Real-time Stock Prices** - Harga saham terkini dengan perubahan harian
 - 📈 **Historical Data** - Data OHLCV untuk charting dan analisis
 - 🔍 **Technical Indicators** - RSI, MACD, SMA, EMA, Bollinger Bands, ADX, dll
+- 📐 **Fibonacci Levels (NEW!)** - Retracement & extension levels untuk support/resistance
 - 💼 **Stock Information** - Informasi fundamental perusahaan
 - 🔎 **Stock Search** - Cari saham berdasarkan nama atau ticker
 - 📉 **Market Summary** - Ringkasan IHSG, top gainers/losers
@@ -169,28 +170,42 @@ Indikator teknikal untuk analisis.
 - +DI dan -DI untuk konfirmasi
 - Interpretasi: ADX > 25 = strong trend, < 20 = weak/sideways
 
-### 4. `get_stock_info`
+### 4. `get_fibonacci_levels` **(NEW!)**
+Fibonacci retracement dan extension levels untuk support/resistance analysis.
+- `ticker` (required): Ticker IDX
+- `period` (optional): 1mo, 3mo, 6mo, 1y (default: 3mo)
+- `trend` (optional): 'auto', 'uptrend', atau 'downtrend' (default: auto)
+
+**Features:**
+- Auto-detect swing high/low
+- 7 Retracement levels (0%, 23.6%, 38.2%, 50%, 61.8%, 78.6%, 100%)
+- 3 Extension levels (127.2%, 161.8%, 200%)
+- Nearest support/resistance identification
+- Risk/reward ratio calculation
+- Trading insights & recommendations
+
+### 5. `get_stock_info`
 Informasi fundamental perusahaan.
 - `ticker` (required): Ticker IDX
 
-### 5. `search_stocks`
+### 6. `search_stocks`
 Cari saham berdasarkan nama atau ticker.
 - `query` (required): Kata kunci pencarian
 - `limit` (optional): Max hasil (default: 10)
 - `sector` (optional): Filter sektor
 
-### 6. `get_market_summary`
+### 7. `get_market_summary`
 Ringkasan pasar IHSG dan top movers.
 - `include_movers` (optional): Include gainers/losers (default: true)
 - `movers_limit` (optional): Jumlah movers (default: 5)
 
-### 7. `compare_stocks`
+### 8. `compare_stocks`
 Bandingkan performa beberapa saham.
 - `tickers` (required): List ticker saham
 - `period` (optional): 1mo, 3mo, 6mo, 1y
 - `metrics` (optional): performance, valuation, dividend
 
-### 8. `get_watchlist_prices`
+### 9. `get_watchlist_prices`
 Harga untuk multiple tickers sekaligus.
 - `tickers` (required): List ticker saham
 
