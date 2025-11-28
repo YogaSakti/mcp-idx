@@ -150,7 +150,7 @@ MCP adalah protokol open-source yang memungkinkan AI clients berkomunikasi denga
 
 ## 📚 Available Tools
 
-**Total: 11 tools**
+**Total: 14 tools**
 
 ### 1. `get_stock_price`
 Harga saham terkini beserta perubahan harian.
@@ -267,6 +267,28 @@ Analisis volatilitas saham.
 - `ticker` (required): Ticker saham IDX
 - `period` (optional): Periode analisis (30d, 90d, 1y, 2y) - default: 1y
 - Menghitung: Historical volatility (30d, 90d, 1y), Beta vs IHSG, ATR-based volatility, Risk level assessment
+
+### 12. `get_fibonacci_levels`
+Hitung Fibonacci retracement dan extension levels.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode untuk swing detection (default: 3mo)
+- `trend` (optional): auto, uptrend, downtrend (default: auto)
+- Menghitung: 7 retracement levels (23.6% - 100%), 3 extension levels, current price position, trading insights
+
+### 13. `get_ma_crossovers`
+Deteksi Moving Average crossover signals.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (default: 1y)
+- `lookback` (optional): Jumlah hari untuk cek crossover (default: 10)
+- Menghitung: Golden Cross/Death Cross (SMA 50/200), EMA 12/26 crossovers, current MA alignment
+
+### 14. `get_candlestick_patterns`
+Deteksi candlestick patterns untuk trading signals.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (default: 1mo)
+- `lookback` (optional): Jumlah candle terakhir untuk scan (default: 10)
+- Patterns: Doji, Hammer, Shooting Star, Engulfing, Morning/Evening Star, Harami
+- Termasuk: Pattern strength rating, signal classification, confidence score
 
 ## 💬 Usage Examples
 
