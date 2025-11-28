@@ -118,7 +118,7 @@ Restart aplikasi AI client kamu. Server akan start otomatis saat AI client terhu
 
 - 📊 **Real-time Stock Prices** - Harga saham terkini dengan perubahan harian
 - 📈 **Historical Data** - Data OHLCV untuk charting dan analisis
-- 🔍 **Technical Indicators** - RSI, MACD, SMA, EMA, Bollinger Bands, dll
+- 🔍 **Technical Indicators** - RSI, MACD, SMA, EMA, Bollinger Bands, ADX, dll
 - 💼 **Stock Information** - Informasi fundamental perusahaan
 - 🔎 **Stock Search** - Cari saham berdasarkan nama atau ticker
 - 📉 **Market Summary** - Ringkasan IHSG, top gainers/losers
@@ -160,8 +160,14 @@ Data OHLCV untuk charting.
 ### 3. `get_technical_indicators`
 Indikator teknikal untuk analisis.
 - `ticker` (required): Ticker IDX
-- `indicators` (optional): rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap
+- `indicators` (optional): rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap, **adx (NEW!)**
 - `period` (optional): 1mo, 3mo, 6mo, 1y
+
+**NEW: ADX (Average Directional Index)**
+- Mengukur kekuatan trend (strong, developing, weak)
+- Menentukan arah trend (bullish/bearish)
+- +DI dan -DI untuk konfirmasi
+- Interpretasi: ADX > 25 = strong trend, < 20 = weak/sideways
 
 ### 4. `get_stock_info`
 Informasi fundamental perusahaan.

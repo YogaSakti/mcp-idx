@@ -78,6 +78,7 @@ class IndicatorsValidator(BaseModel):
             "atr",
             "obv",
             "vwap",
+            "adx",
         ]
         invalid = [ind for ind in v if ind not in valid_indicators]
         if invalid:
