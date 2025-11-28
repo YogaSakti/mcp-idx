@@ -12,9 +12,9 @@ from src.tools.candlestick import get_candlestick_patterns
 
 
 async def test_candlestick_patterns():
-    """Test candlestick patterns with BBCA, BBRI, TLKM."""
+    """Test candlestick patterns with BBCA, BBRI, HMSP."""
 
-    test_tickers = ["BBCA.JK", "BBRI.JK", "TLKM.JK"]
+    test_tickers = ["BBCA.JK", "BBRI.JK", "HMSP.JK"]
 
     for ticker in test_tickers:
         print(f"\n{'='*70}")

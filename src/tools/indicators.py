@@ -25,7 +25,7 @@ def get_technical_indicators_tool() -> Tool:
                 "indicators": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "List indikator (rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap, adx)",
+                    "description": "List indikator (rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap, adx, ichimoku)",
                     "default": settings.DEFAULT_INDICATORS,
                 },
                 "period": {

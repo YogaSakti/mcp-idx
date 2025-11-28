@@ -23,6 +23,7 @@ class CacheManager:
             "info": TTLCache(maxsize=settings.CACHE_MAX_SIZE, ttl=86400),  # 24 hours
             "search": TTLCache(maxsize=settings.CACHE_MAX_SIZE, ttl=21600),  # 6 hours
             "market": TTLCache(maxsize=settings.CACHE_MAX_SIZE, ttl=60),  # 1 minute
+            "financial_ratios": TTLCache(maxsize=settings.CACHE_MAX_SIZE, ttl=86400),  # 24 hours
         }
 
     def get(self, cache_type: str, key: str) -> Optional[Any]:

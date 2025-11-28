@@ -150,6 +150,8 @@ MCP adalah protokol open-source yang memungkinkan AI clients berkomunikasi denga
 
 ## 📚 Available Tools
 
+**Total: 14 tools**
+
 ### 1. `get_stock_price`
 Harga saham terkini beserta perubahan harian.
 - `ticker` (required): Ticker IDX, contoh "BBCA"
@@ -247,6 +249,46 @@ Bandingkan performa beberapa saham.
 ### 11. `get_watchlist_prices`
 Harga untuk multiple tickers sekaligus.
 - `tickers` (required): List ticker saham
+
+### 9. `get_financial_ratios`
+Analisis rasio keuangan fundamental lengkap.
+- `ticker` (required): Ticker saham IDX
+- Menghitung: P/E, P/B, P/S, ROE, ROA, Debt-to-Equity, Current Ratio, Quick Ratio, Dividend Yield, Growth metrics, dll
+- Termasuk interpretasi untuk setiap ratio dan financial score
+
+### 10. `get_volume_analysis`
+Analisis volume trading saham.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (7d, 30d, 90d, 1mo, 3mo, 6mo, 1y) - default: 30d
+- Menghitung: Average volume, volume spikes, volume trend, volume-price correlation, unusual volume detection
+
+### 11. `get_volatility_analysis`
+Analisis volatilitas saham.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (30d, 90d, 1y, 2y) - default: 1y
+- Menghitung: Historical volatility (30d, 90d, 1y), Beta vs IHSG, ATR-based volatility, Risk level assessment
+
+### 12. `get_fibonacci_levels`
+Hitung Fibonacci retracement dan extension levels.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode untuk swing detection (default: 3mo)
+- `trend` (optional): auto, uptrend, downtrend (default: auto)
+- Menghitung: 7 retracement levels (23.6% - 100%), 3 extension levels, current price position, trading insights
+
+### 13. `get_ma_crossovers`
+Deteksi Moving Average crossover signals.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (default: 1y)
+- `lookback` (optional): Jumlah hari untuk cek crossover (default: 10)
+- Menghitung: Golden Cross/Death Cross (SMA 50/200), EMA 12/26 crossovers, current MA alignment
+
+### 14. `get_candlestick_patterns`
+Deteksi candlestick patterns untuk trading signals.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (default: 1mo)
+- `lookback` (optional): Jumlah candle terakhir untuk scan (default: 10)
+- Patterns: Doji, Hammer, Shooting Star, Engulfing, Morning/Evening Star, Harami
+- Termasuk: Pattern strength rating, signal classification, confidence score
 
 ## 💬 Usage Examples
 
