@@ -147,6 +147,8 @@ MCP adalah protokol open-source yang memungkinkan AI clients berkomunikasi denga
 
 ## 📚 Available Tools
 
+**Total: 11 tools**
+
 ### 1. `get_stock_price`
 Harga saham terkini beserta perubahan harian.
 - `ticker` (required): Ticker IDX, contoh "BBCA"
@@ -187,6 +189,24 @@ Bandingkan performa beberapa saham.
 ### 8. `get_watchlist_prices`
 Harga untuk multiple tickers sekaligus.
 - `tickers` (required): List ticker saham
+
+### 9. `get_financial_ratios`
+Analisis rasio keuangan fundamental lengkap.
+- `ticker` (required): Ticker saham IDX
+- Menghitung: P/E, P/B, P/S, ROE, ROA, Debt-to-Equity, Current Ratio, Quick Ratio, Dividend Yield, Growth metrics, dll
+- Termasuk interpretasi untuk setiap ratio dan financial score
+
+### 10. `get_volume_analysis`
+Analisis volume trading saham.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (7d, 30d, 90d, 1mo, 3mo, 6mo, 1y) - default: 30d
+- Menghitung: Average volume, volume spikes, volume trend, volume-price correlation, unusual volume detection
+
+### 11. `get_volatility_analysis`
+Analisis volatilitas saham.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): Periode analisis (30d, 90d, 1y, 2y) - default: 1y
+- Menghitung: Historical volatility (30d, 90d, 1y), Beta vs IHSG, ATR-based volatility, Risk level assessment
 
 ## 💬 Usage Examples
 
