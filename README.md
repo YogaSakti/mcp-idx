@@ -1,6 +1,8 @@
 # MCP Server: IDX Stock Data
 
-MCP (Model Context Protocol) server untuk menghubungkan Claude dengan data saham Indonesia (IDX) secara real-time. Server ini memungkinkan Claude untuk mengakses data harga, historical chart, indikator teknikal, dan informasi fundamental saham.
+MCP (Model Context Protocol) server untuk menghubungkan AI dengan data saham Indonesia (IDX) secara real-time. Server ini kompatibel dengan berbagai AI clients yang mendukung MCP seperti Claude Desktop, Cline, Continue, dan lainnya.
+
+Server ini memungkinkan AI untuk mengakses data harga, historical chart, indikator teknikal, dan informasi fundamental saham melalui protokol MCP standar.
 
 ## 🚀 Quick Start (Lokal)
 
@@ -24,7 +26,11 @@ python3 -m src.server
 
 Tekan `Ctrl+C` untuk stop.
 
-### 3. Setup Claude Desktop
+### 3. Setup AI Client
+
+Server ini kompatibel dengan berbagai AI clients yang mendukung MCP. Pilih sesuai yang kamu pakai:
+
+#### 🤖 Claude Desktop
 
 Tambahkan ke `claude_desktop_config.json`:
 
@@ -48,6 +54,45 @@ Tambahkan ke `claude_desktop_config.json`:
 }
 ```
 
+#### 💻 Cline (VS Code Extension)
+
+Tambahkan ke settings.json atau `.cline/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "idx-stocks": {
+      "command": "python3",
+      "args": ["-m", "src"],
+      "cwd": "/path/to/mcp-idx"
+    }
+  }
+}
+```
+
+#### 🔄 Continue (VS Code Extension)
+
+Tambahkan ke `.continue/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "idx-stocks": {
+      "command": "python3",
+      "args": ["-m", "src"],
+      "cwd": "/path/to/mcp-idx"
+    }
+  }
+}
+```
+
+#### 🌐 Lainnya
+
+Untuk AI clients lain yang support MCP, konfigurasinya umumnya sama:
+- `command`: Path ke Python executable
+- `args`: `["-m", "src"]`
+- `cwd`: Path absolut ke folder project
+
 **Penting:** Ganti `/path/to/mcp-idx` dengan path absolut ke folder project kamu.
 
 Jika pakai venv, gunakan path ke Python di venv:
@@ -63,9 +108,9 @@ Jika pakai venv, gunakan path ke Python di venv:
 }
 ```
 
-### 4. Restart Claude Desktop
+### 4. Restart AI Client
 
-Quit sepenuhnya dan buka lagi. Server akan start otomatis.
+Restart aplikasi AI client kamu. Server akan start otomatis saat AI client terhubung.
 
 📖 **Detail setup lengkap:** Lihat [LOCAL_SETUP.md](LOCAL_SETUP.md)
 
@@ -79,6 +124,17 @@ Quit sepenuhnya dan buka lagi. Server akan start otomatis.
 - 📉 **Market Summary** - Ringkasan IHSG, top gainers/losers
 - ⚖️ **Stock Comparison** - Bandingkan performa beberapa saham
 - 📋 **Watchlist** - Ambil harga multiple tickers sekaligus
+
+## 🤖 Compatible AI Clients
+
+Server ini menggunakan **MCP (Model Context Protocol)** standar, sehingga kompatibel dengan berbagai AI clients:
+
+- 🤖 **Claude Desktop** - Official Claude app dari Anthropic
+- 💻 **Cline** - VS Code extension untuk AI coding assistant
+- 🔄 **Continue** - VS Code extension dengan MCP support
+- 🌐 **AI clients lain** yang implement MCP protocol
+
+MCP adalah protokol open-source yang memungkinkan AI clients berkomunikasi dengan external tools dan data sources secara standar. Server ini mengikuti spesifikasi MCP, jadi bisa dipakai dengan AI client apapun yang support MCP!
 
 ## 🛠 Tech Stack
 
@@ -134,7 +190,7 @@ Harga untuk multiple tickers sekaligus.
 
 ## 💬 Usage Examples
 
-Setelah terhubung dengan Claude Desktop, coba tanyakan:
+Setelah terhubung dengan AI client kamu, coba tanyakan:
 
 1. "Berapa harga BBCA sekarang?"
 2. "Tampilkan chart BBRI 3 bulan terakhir"
@@ -229,16 +285,28 @@ mcp-idx/
 
 **Server tidak start?**
 - Pastikan Python 3.11+ terinstall
-- Cek path di `claude_desktop_config.json` sudah benar (gunakan absolute path)
+- Cek path di config AI client kamu sudah benar (gunakan absolute path)
 - Test manual: `python3 -m src.server`
+
+**AI client tidak detect server?**
+- Pastikan format config sesuai dengan AI client yang kamu pakai
+- Cek log AI client untuk error messages
+- Pastikan `cwd` menggunakan absolute path, bukan relative
 
 **Import errors?**
 - Pastikan dependencies terinstall: `pip install -r requirements.txt`
 - Aktifkan venv jika pakai virtual environment
+- Test import: `python3 -c "from src.server import server; print('OK')"`
 
 **Path issues?**
 - Gunakan **absolute path** untuk `cwd`, bukan relative
 - Windows: gunakan `C:\\path\\to\\project` atau `C:/path/to/project`
+- macOS/Linux: gunakan `/full/path/to/project`
+
+**Tools tidak muncul di AI client?**
+- Restart AI client sepenuhnya (quit dan buka lagi)
+- Cek apakah server start dengan benar (lihat logs)
+- Pastikan MCP protocol didukung oleh AI client kamu
 
 Lihat [LOCAL_SETUP.md](LOCAL_SETUP.md) untuk troubleshooting lengkap.
 

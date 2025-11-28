@@ -5,8 +5,19 @@ This guide explains how to run the IDX Stock MCP Server locally on your machine.
 ## Prerequisites
 
 1. **Python 3.11+** installed
-2. **Claude Desktop** installed
+2. **AI Client yang support MCP** (Claude Desktop, Cline, Continue, atau lainnya)
 3. **Dependencies** installed (see below)
+
+## Supported AI Clients
+
+Server ini kompatibel dengan berbagai AI clients yang mendukung MCP:
+
+- 🤖 **Claude Desktop** - Official Claude app
+- 💻 **Cline** - VS Code extension
+- 🔄 **Continue** - VS Code extension  
+- 🌐 **AI clients lain** yang implement MCP protocol
+
+MCP (Model Context Protocol) adalah protokol standar yang memungkinkan AI clients berkomunikasi dengan external tools dan data sources.
 
 ## Step 1: Install Dependencies
 
@@ -38,15 +49,19 @@ python3 -m src.server
 
 Press Ctrl+C to stop.
 
-## Step 3: Configure Claude Desktop
+## Step 3: Configure AI Client
 
-### Find Config File Location
+Pilih AI client yang kamu pakai:
+
+### 🤖 Claude Desktop
+
+#### Find Config File Location
 
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
-### Add Configuration
+#### Add Configuration
 
 Open `claude_desktop_config.json` and add:
 
@@ -151,18 +166,71 @@ If using a venv, point to the venv's Python:
 }
 ```
 
-## Step 4: Restart Claude Desktop
+### 💻 Cline (VS Code Extension)
 
-1. **Quit Claude Desktop completely** (not just minimize)
-2. **Reopen Claude Desktop**
+1. Install **Cline** extension di VS Code
+2. Tambahkan konfigurasi ke `.cline/mcp.json` atau VS Code settings:
+
+```json
+{
+  "mcpServers": {
+    "idx-stocks": {
+      "command": "python3",
+      "args": ["-m", "src"],
+      "cwd": "/path/to/mcp-idx"
+    }
+  }
+}
+```
+
+### 🔄 Continue (VS Code Extension)
+
+1. Install **Continue** extension di VS Code
+2. Tambahkan konfigurasi ke `.continue/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "idx-stocks": {
+      "command": "python3",
+      "args": ["-m", "src"],
+      "cwd": "/path/to/mcp-idx"
+    }
+  }
+}
+```
+
+### 🌐 AI Clients Lainnya
+
+Untuk AI clients lain yang support MCP, format konfigurasinya umumnya sama:
+
+```json
+{
+  "mcpServers": {
+    "idx-stocks": {
+      "command": "python3",           // atau path ke venv Python
+      "args": ["-m", "src"],
+      "cwd": "/path/to/mcp-idx"       // path absolut ke project
+    }
+  }
+}
+```
+
+**Note:** Beberapa AI clients mungkin menggunakan format config yang sedikit berbeda. Cek dokumentasi MCP client kamu untuk detail spesifik.
+
+## Step 4: Restart AI Client
+
+1. **Quit AI client completely** (not just minimize)
+2. **Reopen AI client**
 3. The MCP server should start automatically
 
 ## Step 5: Verify Connection
 
-1. **Check Claude Desktop Logs** for any errors
-2. **Test in Claude Chat:**
+1. **Check AI client logs** for any errors
+2. **Test in AI chat:**
    - "What tools do you have available?"
    - "Get the current price of BBCA stock"
+   - "Tell me about BBRI stock"
 
 ## Troubleshooting
 
@@ -208,13 +276,14 @@ pip install -r requirements.txt
 
 ## Testing
 
-Once connected, try these in Claude:
+Once connected, try these in your AI client:
 
 1. "What's the current price of BBCA?"
 2. "Tell me about BBRI stock"
 3. "Search for banking stocks"
 4. "What's the IHSG status today?"
 5. "Compare BBCA, BBRI, and BMRI performance"
+6. "What tools do you have available?"
 
 ## Available Tools
 
