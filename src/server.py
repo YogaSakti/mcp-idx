@@ -16,13 +16,13 @@ from src.tools.indicators import get_technical_indicators_tool, get_technical_in
 from src.tools.fibonacci import get_fibonacci_levels_tool, get_fibonacci_levels
 from src.tools.ma_crossover import get_ma_crossover_tool, get_ma_crossovers
 from src.tools.candlestick import get_candlestick_patterns_tool, get_candlestick_patterns
+from src.tools.financial_ratios import get_financial_ratios_tool, get_financial_ratios
+from src.tools.volume_analysis import get_volume_analysis_tool, get_volume_analysis
+from src.tools.volatility_analysis import get_volatility_analysis_tool, get_volatility_analysis
 from src.tools.search import get_search_stocks_tool, search_stocks
 from src.tools.market import get_market_summary_tool, get_market_summary
 from src.tools.compare import get_compare_stocks_tool, compare_stocks
 from src.tools.watchlist import get_watchlist_prices_tool, get_watchlist_prices
-from src.tools.financial_ratios import get_financial_ratios_tool, get_financial_ratios
-from src.tools.volume_analysis import get_volume_analysis_tool, get_volume_analysis
-from src.tools.volatility_analysis import get_volatility_analysis_tool, get_volatility_analysis
 from src.config.settings import settings
 
 # Configure logging
@@ -53,13 +53,13 @@ async def handle_list_tools() -> list[Tool]:
         get_fibonacci_levels_tool(),
         get_ma_crossover_tool(),
         get_candlestick_patterns_tool(),
+        get_financial_ratios_tool(),
+        get_volume_analysis_tool(),
+        get_volatility_analysis_tool(),
         get_search_stocks_tool(),
         get_market_summary_tool(),
         get_compare_stocks_tool(),
         get_watchlist_prices_tool(),
-        get_financial_ratios_tool(),
-        get_volume_analysis_tool(),
-        get_volatility_analysis_tool(),
     ]
 
 
@@ -78,13 +78,13 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
             "get_fibonacci_levels": get_fibonacci_levels,
             "get_ma_crossovers": get_ma_crossovers,
             "get_candlestick_patterns": get_candlestick_patterns,
+            "get_financial_ratios": get_financial_ratios,
+            "get_volume_analysis": get_volume_analysis,
+            "get_volatility_analysis": get_volatility_analysis,
             "search_stocks": search_stocks,
             "get_market_summary": get_market_summary,
             "compare_stocks": compare_stocks,
             "get_watchlist_prices": get_watchlist_prices,
-            "get_financial_ratios": get_financial_ratios,
-            "get_volume_analysis": get_volume_analysis,
-            "get_volatility_analysis": get_volatility_analysis,
         }
 
         handler = tool_handlers.get(name)
