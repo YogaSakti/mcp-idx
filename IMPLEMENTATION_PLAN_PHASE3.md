@@ -24,9 +24,24 @@
   - [x] Registered in MCP server
   - [x] Documentation completed
 
-### Sprint 2: Advanced Indicators (Week 2-3)
-- [ ] **Ichimoku Cloud** - ⏳ Planned
-- [ ] **Moving Average Crossovers** - ⏳ Planned
+### Sprint 2: Advanced Indicators (Week 2-3) - ✅ COMPLETED
+- [x] **Ichimoku Cloud** - ✅ COMPLETED (2025-11-28)
+  - [x] Implemented 5 Ichimoku components
+  - [x] Cloud color & price position analysis
+  - [x] TK Cross signal detection
+  - [x] Overall trend signals
+  - [x] Testing with real data (BBCA, BBRI, TLKM)
+  - [x] Added to validators
+  - [x] Documentation completed
+- [x] **Moving Average Crossovers** - ✅ COMPLETED (2025-11-28)
+  - [x] Created get_ma_crossovers tool
+  - [x] Golden/Death Cross detection (SMA 50/200)
+  - [x] EMA 12/26 crossover detection
+  - [x] Current MA alignment tracking
+  - [x] Configurable lookback period
+  - [x] Testing with real data (BBCA, BBRI, TLKM)
+  - [x] Registered in MCP server
+  - [x] Documentation completed
 
 ### Sprint 3: Pattern Recognition (Week 4-5)
 - [ ] **Candlestick Patterns** - ⏳ Planned
