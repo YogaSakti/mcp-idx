@@ -1,0 +1,25 @@
+{
+  "tickers": [
+    {"ticker": "BBCA", "name": "Bank Central Asia Tbk", "sector": "Finance"},
+    {"ticker": "BBRI", "name": "Bank Rakyat Indonesia Tbk", "sector": "Finance"},
+    {"ticker": "BMRI", "name": "Bank Mandiri Tbk", "sector": "Finance"},
+    {"ticker": "BNGA", "name": "Bank CIMB Niaga Tbk", "sector": "Finance"},
+    {"ticker": "TLKM", "name": "Telkom Indonesia Tbk", "sector": "Technology"},
+    {"ticker": "ASII", "name": "Astra International Tbk", "sector": "Consumer Cyclical"},
+    {"ticker": "UNVR", "name": "Unilever Indonesia Tbk", "sector": "Consumer Defensive"},
+    {"ticker": "ICBP", "name": "Indofood CBP Sukses Makmur Tbk", "sector": "Consumer Defensive"},
+    {"ticker": "INDF", "name": "Indofood Sukses Makmur Tbk", "sector": "Consumer Defensive"},
+    {"ticker": "GOTO", "name": "GoTo Gojek Tokopedia Tbk", "sector": "Technology"},
+    {"ticker": "BRIS", "name": "Bank BRI Syariah Tbk", "sector": "Finance"},
+    {"ticker": "BBNI", "name": "Bank Negara Indonesia Tbk", "sector": "Finance"},
+    {"ticker": "EXCL", "name": "XL Axiata Tbk", "sector": "Technology"},
+    {"ticker": "ISAT", "name": "Indosat Ooredoo Hutchison Tbk", "sector": "Technology"},
+    {"ticker": "ANTM", "name": "Aneka Tambang Tbk", "sector": "Basic Materials"},
+    {"ticker": "ADRO", "name": "Adaro Energy Tbk", "sector": "Energy"},
+    {"ticker": "PGAS", "name": "Perusahaan Gas Negara Tbk", "sector": "Energy"},
+    {"ticker": "PTBA", "name": "Tambang Batubara Bukit Asam Tbk", "sector": "Energy"},
+    {"ticker": "KLBF", "name": "Kalbe Farma Tbk", "sector": "Healthcare"},
+    {"ticker": "HMSP", "name": "H.M. Sampoerna Tbk", "sector": "Consumer Defensive"}
+  ]
+}
+
