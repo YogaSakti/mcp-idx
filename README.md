@@ -119,8 +119,9 @@ Restart aplikasi AI client kamu. Server akan start otomatis saat AI client terhu
 - 📊 **Real-time Stock Prices** - Harga saham terkini dengan perubahan harian
 - 📈 **Historical Data** - Data OHLCV untuk charting dan analisis
 - 🔍 **Technical Indicators** - RSI, MACD, SMA, EMA, Bollinger Bands, ADX, Ichimoku, dll
-- 📐 **Fibonacci Levels (NEW!)** - Retracement & extension levels untuk support/resistance
-- ⚡ **MA Crossovers (NEW!)** - Golden Cross, Death Cross, dan EMA crossover detection
+- 📐 **Fibonacci Levels** - Retracement & extension levels untuk support/resistance
+- ⚡ **MA Crossovers** - Golden Cross, Death Cross, dan EMA crossover detection
+- 🕯️ **Candlestick Patterns (NEW!)** - Doji, Hammer, Engulfing, Morning/Evening Star detection
 - 💼 **Stock Information** - Informasi fundamental perusahaan
 - 🔎 **Stock Search** - Cari saham berdasarkan nama atau ticker
 - 📉 **Market Summary** - Ringkasan IHSG, top gainers/losers
@@ -205,28 +206,45 @@ Detect Moving Average crossovers untuk trading signals.
 - Recent crossover history dengan dates
 - Trading insights & momentum analysis
 
-### 6. `get_stock_info`
+### 6. `get_candlestick_patterns` **(NEW!)**
+Detect candlestick patterns untuk reversal & continuation signals.
+- `ticker` (required): Ticker IDX
+- `period` (optional): 1mo, 3mo, 6mo (default: 1mo)
+- `lookback_days` (optional): Days to look back for patterns (default: 10)
+
+**Supported Patterns:**
+- **Single Candle**: Doji, Hammer, Shooting Star
+- **Two Candle**: Bullish/Bearish Engulfing
+- **Three Candle**: Morning Star, Evening Star
+
+**Features:**
+- Pattern detection dengan strength rating (medium, strong, very_strong)
+- Signal classification (bullish, bearish, neutral)
+- Pattern summary (bullish/bearish/neutral counts)
+- Trading insights & reversal signals
+
+### 7. `get_stock_info`
 Informasi fundamental perusahaan.
 - `ticker` (required): Ticker IDX
 
-### 7. `search_stocks`
+### 8. `search_stocks`
 Cari saham berdasarkan nama atau ticker.
 - `query` (required): Kata kunci pencarian
 - `limit` (optional): Max hasil (default: 10)
 - `sector` (optional): Filter sektor
 
-### 8. `get_market_summary`
+### 9. `get_market_summary`
 Ringkasan pasar IHSG dan top movers.
 - `include_movers` (optional): Include gainers/losers (default: true)
 - `movers_limit` (optional): Jumlah movers (default: 5)
 
-### 9. `compare_stocks`
+### 10. `compare_stocks`
 Bandingkan performa beberapa saham.
 - `tickers` (required): List ticker saham
 - `period` (optional): 1mo, 3mo, 6mo, 1y
 - `metrics` (optional): performance, valuation, dividend
 
-### 10. `get_watchlist_prices`
+### 11. `get_watchlist_prices`
 Harga untuk multiple tickers sekaligus.
 - `tickers` (required): List ticker saham
 
