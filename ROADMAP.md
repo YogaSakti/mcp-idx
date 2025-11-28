@@ -174,9 +174,108 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-### Tier 3: Technical Analysis Enhancement (High Value for Traders)
+### Tier 3: Advanced Features (Complex but Powerful)
 
-#### 7. 📊 ADX (Average Directional Index)
+#### 7. 💼 Portfolio Analysis
+**Status:** 🔜 Planned  
+**Priority:** Low-Medium  
+**Complexity:** High
+
+**Features:**
+- Portfolio P&L calculation
+- Weighted average metrics
+- Portfolio risk (volatility, beta)
+- Allocation analysis
+- Portfolio rebalancing suggestions
+- Risk-adjusted returns (Sharpe ratio)
+
+**Use Cases:**
+- "Analisa portfolio saya: BBCA 40%, BBRI 30%, TLKM 30%"
+- "Hitung total P&L portfolio saya"
+- "Saran rebalancing portfolio"
+
+**Implementation Notes:**
+- Perlu input portfolio composition
+- Perlu agregasi data multiple tickers
+- Perlu kalkulasi weighted metrics
+- Tool baru yang cukup kompleks
+
+---
+
+#### 8. ✨ Moving Average Crossovers
+**Status:** 🔜 Planned  
+**Priority:** Low-Medium  
+**Complexity:** Medium
+
+**Features:**
+- Golden Cross / Death Cross detection
+- Multiple MA crossovers (SMA 50/200, EMA 12/26)
+- Crossover signals dengan volume confirmation
+- Crossover history
+- Signal strength indicator
+
+**Use Cases:**
+- "Apakah BBCA menunjukkan golden cross?"
+- "Deteksi semua crossover signals di BBRI"
+- "Signal trading berdasarkan MA crossover"
+
+**Implementation Notes:**
+- Extend dari `get_technical_indicators`
+- Perlu logic untuk detect crossovers
+- Perlu historical data untuk backtesting
+
+---
+
+#### 9. 🎯 Price Targets & Levels
+**Status:** 🔜 Planned  
+**Priority:** Low  
+**Complexity:** Medium-High
+
+**Features:**
+- Fibonacci retracement levels
+- Pivot points (support/resistance)
+- Price targets dari pattern
+- Risk/reward ratio
+- Multiple timeframe analysis
+
+**Use Cases:**
+- "Hitung price target dan support/resistance BBCA"
+- "Fibonacci levels untuk BBRI"
+- "Risk/reward ratio untuk entry di TLKM"
+
+**Implementation Notes:**
+- Perlu kalkulasi teknikal advanced
+- Perlu pattern recognition
+- Bisa extend dari support/resistance yang sudah ada
+
+---
+
+#### 10. 🕯️ Candlestick Patterns
+**Status:** 🔜 Planned
+**Priority:** Low
+**Complexity:** High
+
+**Features:**
+- Common patterns (Doji, Hammer, Engulfing, etc.)
+- Pattern recognition dengan confidence
+- Pattern success rate historis
+- Multiple timeframe patterns
+- Pattern alerts
+
+**Use Cases:**
+- "Deteksi candlestick patterns di BBRI minggu ini"
+- "Apakah BBCA menunjukkan bullish engulfing?"
+- "History success rate pattern hammer di TLKM"
+
+**Implementation Notes:**
+- Perlu pattern recognition algorithm
+- Perlu historical pattern analysis
+- Bisa pakai library seperti `ta-lib` atau custom logic
+- Kompleksitas tinggi untuk accuracy
+
+---
+
+#### 11. 📊 ADX (Average Directional Index)
 **Status:** 🔜 Planned
 **Priority:** Medium-High
 **Complexity:** Medium
@@ -201,9 +300,9 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-#### 9. ☁️ Ichimoku Cloud
-**Status:** 🔜 Planned  
-**Priority:** Medium  
+#### 12. ☁️ Ichimoku Cloud
+**Status:** 🔜 Planned
+**Priority:** Medium
 **Complexity:** Medium-High
 
 **Features:**
@@ -227,56 +326,32 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-#### 10. ✨ Moving Average Crossovers
-**Status:** 🔜 Planned  
-**Priority:** Medium  
+#### 13. 📐 Fibonacci Retracement
+**Status:** 🔜 Planned
+**Priority:** High
 **Complexity:** Medium
 
 **Features:**
-- Golden Cross / Death Cross detection
-- Multiple MA crossovers (SMA 50/200, EMA 12/26)
-- Crossover signals dengan volume confirmation
-- Crossover history
-- Signal strength indicator
+- Auto-calculate Fibonacci levels (23.6%, 38.2%, 50%, 61.8%, 78.6%)
+- Based on recent swing high/low
+- Support/resistance dari Fibo levels
+- Multiple timeframe analysis
+- Fibo extension levels
 
 **Use Cases:**
-- "Apakah BBCA menunjukkan golden cross?"
-- "Deteksi semua crossover signals di BBRI"
-- "Signal trading berdasarkan MA crossover"
+- "Hitung Fibonacci retracement levels untuk BBCA"
+- "Support resistance BBRI berdasarkan Fibonacci"
+- "Price target TLKM dengan Fibonacci extension"
 
 **Implementation Notes:**
-- Extend dari `get_technical_indicators`
-- Perlu logic untuk detect crossovers
-- Perlu historical data untuk backtesting
+- Tool baru: `get_fibonacci_levels`
+- Auto-detect swing high/low dari historical data
+- Bisa dikombinasi dengan support/resistance yang ada
+- Sangat berguna untuk entry/exit points
 
 ---
 
-#### 11. 🕯️ Candlestick Patterns
-**Status:** 🔜 Planned  
-**Priority:** Medium  
-**Complexity:** High
-
-**Features:**
-- Common patterns (Doji, Hammer, Engulfing, etc.)
-- Pattern recognition dengan confidence
-- Pattern success rate historis
-- Multiple timeframe patterns
-- Pattern alerts
-
-**Use Cases:**
-- "Deteksi candlestick patterns di BBRI minggu ini"
-- "Apakah BBCA menunjukkan bullish engulfing?"
-- "History success rate pattern hammer di TLKM"
-
-**Implementation Notes:**
-- Perlu pattern recognition algorithm
-- Perlu historical pattern analysis
-- Bisa pakai library seperti `ta-lib` atau custom logic
-- Kompleksitas tinggi untuk accuracy
-
----
-
-#### 12. 📈 Chart Pattern Recognition
+#### 14. 📈 Chart Pattern Recognition
 **Status:** 🔜 Planned
 **Priority:** Medium
 **Complexity:** High
@@ -304,37 +379,9 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-### Tier 4: Advanced Portfolio Features
+### Tier 4: IDX-Specific Features (Khusus Market Indonesia)
 
-#### 13. 💼 Portfolio Analysis
-**Status:** 🔜 Planned  
-**Priority:** Medium  
-**Complexity:** High
-
-**Features:**
-- Portfolio P&L calculation
-- Weighted average metrics
-- Portfolio risk (volatility, beta)
-- Allocation analysis
-- Portfolio rebalancing suggestions
-- Risk-adjusted returns (Sharpe ratio)
-
-**Use Cases:**
-- "Analisa portfolio saya: BBCA 40%, BBRI 30%, TLKM 30%"
-- "Hitung total P&L portfolio saya"
-- "Saran rebalancing portfolio"
-
-**Implementation Notes:**
-- Perlu input portfolio composition
-- Perlu agregasi data multiple tickers
-- Perlu kalkulasi weighted metrics
-- Tool baru yang cukup kompleks
-
----
-
-### Tier 5: IDX-Specific Features (Khusus Market Indonesia)
-
-#### 14. 🇮🇩 Foreign vs Domestic Flow
+#### 15. 🇮🇩 Foreign vs Domestic Flow
 **Status:** 🔜 Planned
 **Priority:** High
 **Complexity:** High
@@ -361,7 +408,7 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-#### 15. 🏢 Broker Summary
+#### 16. 🏢 Broker Summary
 **Status:** 🔜 Planned
 **Priority:** Medium-High
 **Complexity:** Very High
@@ -388,7 +435,7 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-#### 16. 📅 Corporate Actions
+#### 17. 📅 Corporate Actions
 **Status:** 🔜 Planned
 **Priority:** Medium
 **Complexity:** Medium
@@ -415,7 +462,7 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-#### 17. 📊 Index Composition & Tracking
+#### 18. 📊 Index Composition & Tracking
 **Status:** 🔜 Planned
 **Priority:** Medium
 **Complexity:** Medium
@@ -441,7 +488,7 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ---
 
-#### 18. 📡 Market Breadth Analysis
+#### 19. 📡 Market Breadth Analysis
 **Status:** 🔜 Planned
 **Priority:** Medium
 **Complexity:** Medium-High
@@ -480,36 +527,31 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 
 ### Phase 2: Enhancement (Tier 2)
 **Target:** 3-4 minggu
-- 🔜 Sector Analysis
-- 🔜 Dividend Analysis
-- 🔜 Correlation Analysis
+- ✅ Sector Analysis
+- ✅ Dividend Analysis
+- ✅ Correlation Analysis
 
-### Phase 3: Technical Analysis Enhancement (Tier 3)
-**Target:** 4-5 minggu
-- 🔜 ADX (Average Directional Index) - Priority: High
-- 🔜 Fibonacci Retracement Levels - Priority: High
-- 🔜 Ichimoku Cloud - Priority: Medium
-- 🔜 Moving Average Crossovers - Priority: Medium
-- 🔜 Candlestick Patterns - Priority: Medium
-- 🔜 Chart Pattern Recognition - Priority: Medium
-
-**Note:** Phase 3 direkomendasikan dikerjakan dulu karena:
-- Data tersedia (Yahoo Finance + pandas_ta)
-- High value untuk traders Indonesia
-- Easier implementation
-- No external dependencies
-
-### Phase 4: Advanced Portfolio Features (Tier 4)
-**Target:** 2-3 minggu
+### Phase 3: Advanced (Tier 3)
+**Target:** 4-6 minggu
 - 🔜 Portfolio Analysis
+- 🔜 Moving Average Crossovers
+- 🔜 Price Targets & Levels
+- 🔜 Candlestick Patterns
 
-### Phase 5: IDX-Specific Features (Tier 5)
+### Phase 4: Technical Analysis Enhancement
+**Target:** 3-4 minggu
+- 🔜 ADX (Average Directional Index)
+- 🔜 Fibonacci Retracement Levels
+- 🔜 Ichimoku Cloud
+- 🔜 Chart Pattern Recognition
+
+### Phase 5: IDX-Specific Features (Tier 4)
 **Target:** 6-8 minggu (tergantung data availability)
-- 🔜 Foreign vs Domestic Flow - Priority: High (butuh data scraping/API)
-- 🔜 Corporate Actions - Priority: Medium (partial dari Yahoo)
-- 🔜 Index Composition & Tracking - Priority: Medium (scraping IDX)
-- 🔜 Market Breadth Analysis - Priority: Medium (perlu data all stocks)
-- 🔜 Broker Summary - Priority: Low-Medium (perlu paid data feed)
+- 🔜 Foreign vs Domestic Flow
+- 🔜 Corporate Actions
+- 🔜 Index Composition & Tracking
+- 🔜 Market Breadth Analysis
+- 🔜 Broker Summary (optional, perlu paid data)
 
 ---
 
@@ -579,7 +621,7 @@ Ide tools baru atau improvement bisa ditambahkan di sini dengan format:
 9. **Market Breadth** - Perlu data all IDX stocks
 
 ### Priority Recommendation
-**Phase 3 (Technical Analysis Enhancement)** sebaiknya dikerjakan dulu karena:
+**Phase 4 (Technical Enhancement)** sebaiknya dikerjakan dulu karena:
 - Data tersedia (Yahoo Finance + pandas_ta)
 - High value untuk traders Indonesia
 - Easier implementation

@@ -118,7 +118,10 @@ Restart aplikasi AI client kamu. Server akan start otomatis saat AI client terhu
 
 - 📊 **Real-time Stock Prices** - Harga saham terkini dengan perubahan harian
 - 📈 **Historical Data** - Data OHLCV untuk charting dan analisis
-- 🔍 **Technical Indicators** - RSI, MACD, SMA, EMA, Bollinger Bands, dll
+- 🔍 **Technical Indicators** - RSI, MACD, SMA, EMA, Bollinger Bands, ADX, Ichimoku, dll
+- 📐 **Fibonacci Levels** - Retracement & extension levels untuk support/resistance
+- ⚡ **MA Crossovers** - Golden Cross, Death Cross, dan EMA crossover detection
+- 🕯️ **Candlestick Patterns (NEW!)** - Doji, Hammer, Engulfing, Morning/Evening Star detection
 - 💼 **Stock Information** - Informasi fundamental perusahaan
 - 🔎 **Stock Search** - Cari saham berdasarkan nama atau ticker
 - 📉 **Market Summary** - Ringkasan IHSG, top gainers/losers
@@ -162,31 +165,88 @@ Data OHLCV untuk charting.
 ### 3. `get_technical_indicators`
 Indikator teknikal untuk analisis.
 - `ticker` (required): Ticker IDX
-- `indicators` (optional): rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap
+- `indicators` (optional): rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap, **adx**, **ichimoku (NEW!)**
 - `period` (optional): 1mo, 3mo, 6mo, 1y
 
-### 4. `get_stock_info`
+**NEW: ADX (Average Directional Index)**
+- Mengukur kekuatan trend (strong, developing, weak)
+- Menentukan arah trend (bullish/bearish)
+- +DI dan -DI untuk konfirmasi
+- Interpretasi: ADX > 25 = strong trend, < 20 = weak/sideways
+
+**NEW: Ichimoku Cloud**
+- 5 komponen: Tenkan-sen, Kijun-sen, Senkou Span A/B, Chikou Span
+- Cloud color (bullish/bearish)
+- Price vs Cloud position (above/inside/below)
+- TK Cross signal
+- Overall trend signal (strong_bullish, bullish, neutral, bearish, strong_bearish)
+
+### 4. `get_fibonacci_levels` **(NEW!)**
+Fibonacci retracement dan extension levels untuk support/resistance analysis.
+- `ticker` (required): Ticker IDX
+- `period` (optional): 1mo, 3mo, 6mo, 1y (default: 3mo)
+- `trend` (optional): 'auto', 'uptrend', atau 'downtrend' (default: auto)
+
+**Features:**
+- Auto-detect swing high/low
+- 7 Retracement levels (0%, 23.6%, 38.2%, 50%, 61.8%, 78.6%, 100%)
+- 3 Extension levels (127.2%, 161.8%, 200%)
+- Nearest support/resistance identification
+- Risk/reward ratio calculation
+- Trading insights & recommendations
+
+### 5. `get_ma_crossovers` **(NEW!)**
+Detect Moving Average crossovers untuk trading signals.
+- `ticker` (required): Ticker IDX
+- `period` (optional): 3mo, 6mo, 1y (default: 6mo)
+- `lookback_days` (optional): Days to look back for crossovers (default: 30)
+
+**Features:**
+- Golden Cross / Death Cross detection (SMA 50 x SMA 200)
+- EMA 12 x EMA 26 crossovers
+- Current MA alignment (bullish/bearish)
+- Recent crossover history dengan dates
+- Trading insights & momentum analysis
+
+### 6. `get_candlestick_patterns` **(NEW!)**
+Detect candlestick patterns untuk reversal & continuation signals.
+- `ticker` (required): Ticker IDX
+- `period` (optional): 1mo, 3mo, 6mo (default: 1mo)
+- `lookback_days` (optional): Days to look back for patterns (default: 10)
+
+**Supported Patterns:**
+- **Single Candle**: Doji, Hammer, Shooting Star
+- **Two Candle**: Bullish/Bearish Engulfing
+- **Three Candle**: Morning Star, Evening Star
+
+**Features:**
+- Pattern detection dengan strength rating (medium, strong, very_strong)
+- Signal classification (bullish, bearish, neutral)
+- Pattern summary (bullish/bearish/neutral counts)
+- Trading insights & reversal signals
+
+### 7. `get_stock_info`
 Informasi fundamental perusahaan.
 - `ticker` (required): Ticker IDX
 
-### 5. `search_stocks`
+### 8. `search_stocks`
 Cari saham berdasarkan nama atau ticker.
 - `query` (required): Kata kunci pencarian
 - `limit` (optional): Max hasil (default: 10)
 - `sector` (optional): Filter sektor
 
-### 6. `get_market_summary`
+### 9. `get_market_summary`
 Ringkasan pasar IHSG dan top movers.
 - `include_movers` (optional): Include gainers/losers (default: true)
 - `movers_limit` (optional): Jumlah movers (default: 5)
 
-### 7. `compare_stocks`
+### 10. `compare_stocks`
 Bandingkan performa beberapa saham.
 - `tickers` (required): List ticker saham
 - `period` (optional): 1mo, 3mo, 6mo, 1y
 - `metrics` (optional): performance, valuation, dividend
 
-### 8. `get_watchlist_prices`
+### 11. `get_watchlist_prices`
 Harga untuk multiple tickers sekaligus.
 - `tickers` (required): List ticker saham
 

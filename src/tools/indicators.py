@@ -25,7 +25,7 @@ def get_technical_indicators_tool() -> Tool:
                 "indicators": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "List indikator (rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap)",
+                    "description": "List indikator (rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap, adx)",
                     "default": settings.DEFAULT_INDICATORS,
                 },
                 "period": {
@@ -148,6 +148,90 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                     result["vwap"] = {
                         "value": round(float(vwap.iloc[-1]), 2),
                     }
+
+            elif ind == "adx":
+                # Calculate ADX with pandas_ta
+                adx_data = ta.adx(high, low, close, length=14)
+                if adx_data is not None and not adx_data.empty:
+                    # pandas_ta returns DataFrame with columns: ADX_14, DMP_14, DMN_14
+                    adx_value = adx_data['ADX_14'].iloc[-1] if 'ADX_14' in adx_data.columns else None
+                    plus_di = adx_data['DMP_14'].iloc[-1] if 'DMP_14' in adx_data.columns else None
+                    minus_di = adx_data['DMN_14'].iloc[-1] if 'DMN_14' in adx_data.columns else None
+
+                    if adx_value is not None and plus_di is not None and minus_di is not None:
+                        # Interpret trend strength based on ADX value
+                        if adx_value > 25:
+                            trend_strength = "strong"
+                        elif adx_value >= 20:
+                            trend_strength = "developing"
+                        else:
+                            trend_strength = "weak"
+
+                        # Interpret trend direction based on DI comparison
+                        trend_direction = "bullish" if plus_di > minus_di else "bearish"
+
+                        result["adx"] = {
+                            "value": round(float(adx_value), 2),
+                            "plus_di": round(float(plus_di), 2),
+                            "minus_di": round(float(minus_di), 2),
+                            "trend_strength": trend_strength,
+                            "trend_direction": trend_direction,
+                        }
+
+            elif ind == "ichimoku":
+                # Calculate Ichimoku Cloud (lookahead=False to avoid data leak)
+                ichimoku_result = ta.ichimoku(high, low, close, lookahead=False)
+
+                if ichimoku_result is not None and len(ichimoku_result) == 2:
+                    hist_df = ichimoku_result[0]  # Historical DataFrame
+
+                    if not hist_df.empty and len(hist_df) > 0:
+                        # Get latest values
+                        tenkan = hist_df['ITS_9'].iloc[-1]  # Tenkan-sen (Conversion Line)
+                        kijun = hist_df['IKS_26'].iloc[-1]  # Kijun-sen (Base Line)
+                        senkou_a = hist_df['ISA_9'].iloc[-1]  # Senkou Span A (Leading Span A)
+                        senkou_b = hist_df['ISB_26'].iloc[-1]  # Senkou Span B (Leading Span B)
+
+                        current_price = close.iloc[-1]
+
+                        # Cloud interpretation
+                        cloud_color = "bullish" if senkou_a > senkou_b else "bearish"
+                        cloud_top = max(senkou_a, senkou_b)
+                        cloud_bottom = min(senkou_a, senkou_b)
+
+                        # Price vs Cloud position
+                        if current_price > cloud_top:
+                            price_vs_cloud = "above"
+                        elif current_price < cloud_bottom:
+                            price_vs_cloud = "below"
+                        else:
+                            price_vs_cloud = "inside"
+
+                        # TK Cross (Tenkan-Kijun crossover)
+                        tk_cross = "bullish" if tenkan > kijun else "bearish"
+
+                        # Overall signal
+                        if tenkan > kijun and price_vs_cloud == "above" and cloud_color == "bullish":
+                            signal = "strong_bullish"
+                        elif tenkan < kijun and price_vs_cloud == "below" and cloud_color == "bearish":
+                            signal = "strong_bearish"
+                        elif price_vs_cloud == "above":
+                            signal = "bullish"
+                        elif price_vs_cloud == "below":
+                            signal = "bearish"
+                        else:
+                            signal = "neutral"
+
+                        result["ichimoku"] = {
+                            "tenkan_sen": round(float(tenkan), 2),
+                            "kijun_sen": round(float(kijun), 2),
+                            "senkou_span_a": round(float(senkou_a), 2),
+                            "senkou_span_b": round(float(senkou_b), 2),
+                            "cloud_color": cloud_color,
+                            "price_vs_cloud": price_vs_cloud,
+                            "tk_cross": tk_cross,
+                            "signal": signal,
+                        }
 
         except Exception:
             # Skip indicators that fail to calculate
