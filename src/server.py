@@ -28,6 +28,12 @@ from src.tools.foreign_flow import (
     get_bandarmology_tool, get_bandarmology,
     get_tape_reading_tool, get_tape_reading
 )
+from src.tools.fundamental import (
+    get_financial_statements_tool, get_financial_statements,
+    get_earnings_growth_tool, get_earnings_growth,
+    get_analyst_ratings_tool, get_analyst_ratings,
+    get_dividend_history_tool, get_dividend_history
+)
 from src.config.settings import settings
 
 # Configure logging
@@ -68,6 +74,10 @@ async def handle_list_tools() -> list[Tool]:
         get_foreign_flow_tool(),
         get_bandarmology_tool(),
         get_tape_reading_tool(),
+        get_financial_statements_tool(),
+        get_earnings_growth_tool(),
+        get_analyst_ratings_tool(),
+        get_dividend_history_tool(),
     ]
 @server.call_tool()
 async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
@@ -94,6 +104,10 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
             "get_foreign_flow": get_foreign_flow,
             "get_bandarmology": get_bandarmology,
             "get_tape_reading": get_tape_reading,
+            "get_financial_statements": get_financial_statements,
+            "get_earnings_growth": get_earnings_growth,
+            "get_analyst_ratings": get_analyst_ratings,
+            "get_dividend_history": get_dividend_history,
         }
         
         handler = tool_handlers.get(name)

@@ -150,11 +150,14 @@ MCP adalah protokol open-source yang memungkinkan AI clients berkomunikasi denga
 
 ## 📚 Available Tools
 
-**Total: 14 tools**
+**Total: 21 tools** (7 new: Foreign Flow, Bandarmology, Tape Reading, Financial Statements, Earnings Growth, Analyst Ratings, Dividend History)
+
+> **ℹ️ Format Ticker:** Input ticker bisa dengan atau tanpa suffix `.JK` (sistem otomatis menambahkan suffix jika tidak ada)  
+> Contoh: `BBCA`, `BBRI`, `TLKM` atau `BBCA.JK`, `BBRI.JK`, `TLKM.JK`
 
 ### 1. `get_stock_price`
 Harga saham terkini beserta perubahan harian.
-- `ticker` (required): Ticker IDX, contoh "BBCA"
+- `ticker` (required): Ticker IDX, contoh "BBCA" atau "BBCA.JK"
 
 ### 2. `get_historical_data`
 Data OHLCV untuk charting.
@@ -268,6 +271,88 @@ Analisis volatilitas saham.
 - `period` (optional): Periode analisis (30d, 90d, 1y, 2y) - default: 1y
 - Menghitung: Historical volatility (30d, 90d, 1y), Beta vs IHSG, ATR-based volatility, Risk level assessment
 
+### 15. `get_foreign_flow` **(NEW! 🔥)**
+Analisis aliran dana asing dan institusi (Smart Money).
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): 7d, 1mo, 3mo, 6mo (default: 1mo)
+
+**Features:**
+- Foreign ownership (insiders, institutions, float %)
+- Accumulation/Distribution pattern detection
+- Volume trend analysis
+- Smart Money score & confidence rating
+- Institutional interest level
+
+### 16. `get_bandarmology` **(NEW! 🔥)**
+Deteksi fase akumulasi/distribusi bandar.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): 1mo, 3mo, 6mo, 1y (default: 3mo)
+
+**Features:**
+- 4 Phase detection: ACCUMULATION, MARKUP, DISTRIBUTION, MARKDOWN
+- Phase strength & confidence rating
+- Price-volume action analysis
+- Bandar strength score
+- Trading recommendation dengan risk level
+
+### 17. `get_tape_reading` **(NEW! 🔥)**
+Membaca order flow & pressure real-time.
+- `ticker` (required): Ticker saham IDX
+- `period` (optional): 1d, 5d, 1mo (default: 5d untuk intraday)
+
+**Features:**
+- Buying/Selling pressure detection
+- Order flow analysis (aggressive buying/selling)
+- Absorption detection (strong support/resistance)
+- Last bar details (OHLC, volume, spread, wicks)
+- Immediate action recommendation
+
+### 18. `get_financial_statements` **(NEW! 💰)**
+Analisis laporan keuangan lengkap.
+- `ticker` (required): Ticker saham IDX
+- `period_type` (optional): quarterly, annual (default: annual)
+
+**Features:**
+- Income Statement: Revenue, Gross/Operating/Net Income, Margins
+- Balance Sheet: Assets, Liabilities, Equity, Liquidity Ratios
+- Cash Flow: Operating/Investing/Financing, Free Cash Flow
+- Financial Health Score (0-100) dengan rating
+- Multi-period comparison (up to 5 periods)
+
+### 19. `get_earnings_growth` **(NEW! 📈)**
+Analisis pertumbuhan earnings historis.
+- `ticker` (required): Ticker saham IDX
+
+**Features:**
+- Historical earnings (Revenue, Net Income, EBITDA)
+- Year-over-Year growth rates
+- CAGR (Compound Annual Growth Rate)
+- Growth rating: Explosive/Strong/Moderate/Slow/Negative
+- Multi-year trend analysis
+
+### 20. `get_analyst_ratings` **(NEW! 👥)**
+Konsensus analyst & earnings estimates.
+- `ticker` (required): Ticker saham IDX
+
+**Features:**
+- Analyst recommendations: Strong Buy/Buy/Hold/Sell breakdown
+- Consensus rating dengan interpretasi
+- Earnings & Revenue estimates dengan YoY growth
+- Target price range (Low/Avg/High)
+- Earnings calendar: Next report date & estimates
+
+### 21. `get_dividend_history` **(NEW! 💵)**
+Analisis historis dividen & yield.
+- `ticker` (required): Ticker saham IDX
+
+**Features:**
+- Dividend payment history (dates & amounts)
+- Dividend yield calculation
+- Annual dividend & YoY growth
+- Consistency rating: High/Medium/Low
+- Years of continuous payments
+- Dividend rating: Excellent/Good/Fair/Poor/No Dividend
+
 ## 💬 Usage Examples
 
 Setelah terhubung dengan AI client kamu, coba tanyakan:
@@ -279,6 +364,13 @@ Setelah terhubung dengan AI client kamu, coba tanyakan:
 5. "Cari saham sektor banking dengan market cap terbesar"
 6. "Gimana kondisi IHSG hari ini?"
 7. "Apa saja top gainers hari ini?"
+8. "Analisa foreign flow BBRI, apa institusi lagi akumulasi?" **(NEW!)**
+9. "Cek bandarmology TLKM, lagi fase apa sekarang?" **(NEW!)**
+10. "Tape reading ASII, ada buying pressure gak?" **(NEW!)**
+11. "Analisa laporan keuangan BBCA.JK, gimana kesehatan finansialnya?" **(NEW!)**
+12. "Berapa CAGR earnings BBRI.JK dalam 3 tahun terakhir?" **(NEW!)**
+13. "Apa konsensus analyst untuk TLKM.JK? Buy atau sell?" **(NEW!)**
+14. "Berapa dividend yield BBCA.JK? Konsisten gak bayar dividennya?" **(NEW!)**
 
 ## ⚙️ Configuration (Optional)
 
@@ -337,7 +429,7 @@ mcp-idx/
 ├── src/
 │   ├── server.py              # MCP server utama
 │   ├── server_http.py         # HTTP server (optional)
-│   ├── tools/                 # Tool implementations (14 tools)
+│   ├── tools/                 # Tool implementations (21 tools)
 │   │   ├── price.py           # Current price
 │   │   ├── info.py            # Stock info
 │   │   ├── historical.py      # OHLCV data
@@ -351,7 +443,9 @@ mcp-idx/
 │   │   ├── search.py          # Stock search
 │   │   ├── market.py          # Market summary
 │   │   ├── compare.py         # Stock comparison
-│   │   └── watchlist.py       # Watchlist prices
+│   │   ├── watchlist.py       # Watchlist prices
+│   │   ├── foreign_flow.py    # Smart money analysis (NEW!)
+│   │   └── fundamental.py     # Financial statements, earnings, analyst, dividend (NEW!)
 │   ├── utils/                 # Utilities
 │   │   ├── yahoo.py           # Yahoo Finance wrapper
 │   │   ├── helpers.py         # Helper functions
@@ -361,7 +455,7 @@ mcp-idx/
 │   └── config/                # Configuration
 │       ├── settings.py        # Settings
 │       └── tickers.json       # IDX tickers
-├── tests/                     # Test suite (11 test files)
+├── tests/                     # Test suite (14 test files)
 │   ├── test_price.py
 │   ├── test_validators.py
 │   ├── test_helpers.py
@@ -372,7 +466,11 @@ mcp-idx/
 │   ├── test_candlestick.py
 │   ├── test_financial_ratios.py
 │   ├── test_volume_analysis.py
-│   └── test_volatility_analysis.py
+│   ├── test_volatility_analysis.py
+│   ├── test_foreign_flow.py   # Smart money tests (NEW!)
+│   ├── test_fundamental.py    # Fundamental analysis tests (NEW!)
+│   ├── stock_screener.py      # Stock screener with 4 strategies
+│   └── stock_signal_now.py    # Signal generator for all sectors
 ├── requirements.txt
 ├── pyproject.toml
 ├── README.md
