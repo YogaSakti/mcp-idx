@@ -50,4 +50,17 @@ htmlcov/
 # MCP
 .mcp/
 
+# Analysis Results
+analisis/
+
+# Monitor logs and runtime data
+monitor/*.log
+monitor/*.pid
+
 ROADMAP.md
+
+# other analisis files
+test_backtesting.py
+tests/stock_signal_now.py
+tests/stock_screener.py
+tests/test_strategy.py

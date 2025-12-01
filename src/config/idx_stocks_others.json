@@ -1,0 +1,69 @@
+{
+  "IDX_SECOND_LINER": {
+    "FINANCE": [
+      "BBHI",
+      "PNBN",
+      "BJBR",
+      "BJTM",
+      "BFIN",
+      "CFIN",
+      "TUGU",
+      "ADMF"
+    ],
+    "PROPERTY_AND_CONSTRUCTION": [
+      "PANI",
+      "ASRI",
+      "DILD",
+      "MKPI",
+      "LPKR",
+      "WTON",
+      "TOTL",
+      "ADHI",
+      "PTPP"
+    ],
+    "CONSUMER_AND_RETAIL": [
+      "CMRY",
+      "GOOD",
+      "SIDO",
+      "CLEO",
+      "MIDI",
+      "RALS",
+      "LPPF",
+      "ERAA"
+    ],
+    "MINING_AND_ENERGY": [
+      "ADMR",
+      "BUMI",
+      "NCKL",
+      "DOID",
+      "MEDC",
+      "INDY",
+      "ELSA",
+      "PGAS",
+      "TINS"
+    ],
+    "BASIC_MATERIALS": [
+      "SRIL",
+      "FPNI",
+      "TKIM",
+      "INKP",
+      "TPIA",
+      "SMGR",
+      "INTP"
+    ],
+    "TECHNOLOGY_AND_COMMUNICATION": [
+      "LINK",
+      "WIRG",
+      "MTDL",
+      "DCII",
+      "BUKA"
+    ],
+    "OTHERS": [
+      "AKRA",
+      "JPFA",
+      "CPIN",
+      "SILO",
+      "MIKA"
+    ]
+  }
+}

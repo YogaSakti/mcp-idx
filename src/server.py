@@ -60,9 +60,9 @@ async def handle_list_tools() -> list[Tool]:
         get_market_summary_tool(),
         get_compare_stocks_tool(),
         get_watchlist_prices_tool(),
+        get_compare_stocks_tool(),
+        get_watchlist_prices_tool(),
     ]
-
-
 @server.call_tool()
 async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Handle tool calls."""
@@ -85,9 +85,9 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
             "get_market_summary": get_market_summary,
             "compare_stocks": compare_stocks,
             "get_watchlist_prices": get_watchlist_prices,
-        }
-
-        handler = tool_handlers.get(name)
+            "compare_stocks": compare_stocks,
+            "get_watchlist_prices": get_watchlist_prices,
+        }andler = tool_handlers.get(name)
         if not handler:
             from src.utils.exceptions import InvalidParameterError
             raise InvalidParameterError(f"Unknown tool: {name}")
