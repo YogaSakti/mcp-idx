@@ -23,6 +23,11 @@ from src.tools.search import get_search_stocks_tool, search_stocks
 from src.tools.market import get_market_summary_tool, get_market_summary
 from src.tools.compare import get_compare_stocks_tool, compare_stocks
 from src.tools.watchlist import get_watchlist_prices_tool, get_watchlist_prices
+from src.tools.foreign_flow import (
+    get_foreign_flow_tool, get_foreign_flow,
+    get_bandarmology_tool, get_bandarmology,
+    get_tape_reading_tool, get_tape_reading
+)
 from src.config.settings import settings
 
 # Configure logging
@@ -60,8 +65,9 @@ async def handle_list_tools() -> list[Tool]:
         get_market_summary_tool(),
         get_compare_stocks_tool(),
         get_watchlist_prices_tool(),
-        get_compare_stocks_tool(),
-        get_watchlist_prices_tool(),
+        get_foreign_flow_tool(),
+        get_bandarmology_tool(),
+        get_tape_reading_tool(),
     ]
 @server.call_tool()
 async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
@@ -85,9 +91,12 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
             "get_market_summary": get_market_summary,
             "compare_stocks": compare_stocks,
             "get_watchlist_prices": get_watchlist_prices,
-            "compare_stocks": compare_stocks,
-            "get_watchlist_prices": get_watchlist_prices,
-        }andler = tool_handlers.get(name)
+            "get_foreign_flow": get_foreign_flow,
+            "get_bandarmology": get_bandarmology,
+            "get_tape_reading": get_tape_reading,
+        }
+        
+        handler = tool_handlers.get(name)
         if not handler:
             from src.utils.exceptions import InvalidParameterError
             raise InvalidParameterError(f"Unknown tool: {name}")
