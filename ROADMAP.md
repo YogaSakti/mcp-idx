@@ -388,29 +388,33 @@ Dokumen ini berisi rencana pengembangan tools analisis tambahan untuk IDX Stock 
 ### Tier 4: IDX-Specific Features (Khusus Market Indonesia)
 
 #### 15. 🇮🇩 Foreign vs Domestic Flow
-**Status:** 🔜 Planned
+**Status:** ⚠️ Partially Implemented (Smart Money Proxy)
 **Priority:** High
 **Complexity:** High
 
-**Features:**
-- Daily foreign buy/sell value
-- Net foreign flow
-- Foreign ownership percentage
-- Foreign flow trend (accumulation/distribution)
+**Current Implementation:**
+- ✅ Smart Money Proxy berdasarkan volume-price action
+- ✅ Accumulation/Distribution pattern detection
+- ✅ Volume trend analysis
+- ⚠️ **Note:** Bukan real foreign net buy/sell dari BEI
+
+**Missing (Real Foreign Flow):**
+- Daily foreign buy/sell value dari BEI
+- Net foreign flow data
 - Top foreign activity stocks
-- Historical foreign flow pattern
+- Broker summary
 
 **Use Cases:**
-- "Berapa net foreign flow BBCA hari ini?"
-- "Apakah asing sedang akumulasi atau distribusi di BBRI?"
-- "Top 10 saham dengan foreign inflow terbesar"
+- "Berapa net foreign flow BBCA hari ini?" → ⚠️ Proxy only
+- "Apakah asing sedang akumulasi atau distribusi di BBRI?" → ✅ Via volume pattern
+- "Top 10 saham dengan foreign inflow terbesar" → ❌ Need BEI data
 
 **Implementation Notes:**
-- **Challenge:** Data tidak tersedia di Yahoo Finance
-- Perlu scraping dari IDX website atau RTI (Real-Time Information)
-- Alternatif: paid API (Bloomberg, Refinitiv, atau lokal seperti Pluang/Stockbit)
-- Tool baru: `get_foreign_flow`
-- Very valuable untuk Indonesian traders!
+- **Challenge:** Real data tidak tersedia di Yahoo Finance
+- Current tool `get_foreign_flow` adalah PROXY, bukan real data
+- Untuk real foreign flow, perlu:
+  - Scraping dari IDX website atau RTI
+  - Paid API (Bloomberg, Refinitiv, atau lokal seperti Pluang/Stockbit)
 
 ---
 
@@ -648,5 +652,37 @@ Ide tools baru atau improvement bisa ditambahkan di sini dengan format:
 
 ---
 
-*Last Updated: 2025-11-28*
+---
+
+## 🇮🇩 IDX Market Optimizations (2 Dec 2025)
+
+### Completed Today:
+
+#### Technical Indicators (`indicators.py`)
+- ✅ RSI interpretation adjusted untuk IDX (RSI 70-80 masih momentum)
+- ✅ Dynamic MA alignment scoring (tidak hardcode)
+- ✅ NaN guards untuk semua indikator
+- ✅ Data sorting fix (ascending untuk kalkulasi yang benar)
+- ✅ Bollinger Bands position % dan width
+
+#### Bandarmology (`foreign_flow.py`)
+- ✅ 3 Volume Regime (LOW, NEUTRAL, HIGH)
+- ✅ Improved MARKDOWN detection (multiple patterns)
+- ✅ Division by zero guards
+- ✅ **ARA/ARB Detection dengan:**
+  - Tick size (fraksi harga) per range harga
+  - FCA board support (Papan Pemantauan Khusus, ±10%)
+  - Floor price (Rp50 regular, Rp1 PPK)
+- ✅ Renamed labels ke "smart_money_proxy" (lebih akurat)
+
+#### Fibonacci (`fibonacci.py`)
+- ✅ Fixed extension formula (sebelumnya salah)
+- ✅ Added 261.8% extension level untuk ARA beruntun
+
+#### Volume Analysis (`volume_analysis.py`)
+- ✅ Fixed division by zero handling
+
+---
+
+*Last Updated: 2025-12-02*
 

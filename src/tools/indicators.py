@@ -7,7 +7,7 @@ from mcp.types import Tool
 from src.utils.yahoo import yahoo_client, YahooFinanceError
 from src.utils.validators import validate_ticker, validate_period, validate_indicators
 from src.config.settings import settings
-from src.utils.helpers import format_ticker
+# format_ticker handled by yahoo_client internally
 
 
 def get_technical_indicators_tool() -> Tool:
@@ -62,15 +62,17 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                 rsi = ta.rsi(close, length=14)
                 if not rsi.empty:
                     rsi_value = rsi.iloc[-1]
-                    interpretation = (
-                        "overbought" if rsi_value > 70
-                        else "oversold" if rsi_value < 30
-                        else "neutral"
-                    )
-                    result["rsi_14"] = {
-                        "value": round(float(rsi_value), 2),
-                        "interpretation": interpretation,
-                    }
+                    # NaN guard: RSI butuh minimal 14 bars
+                    if pd.notna(rsi_value):
+                        interpretation = (
+                            "overbought" if rsi_value > 70
+                            else "oversold" if rsi_value < 30
+                            else "neutral"
+                        )
+                        result["rsi_14"] = {
+                            "value": round(float(rsi_value), 2),
+                            "interpretation": interpretation,
+                        }
 
             elif ind == "macd":
                 macd_data = ta.macd(close)
@@ -78,14 +80,15 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                     macd_line = macd_data.iloc[-1, 0] if len(macd_data.columns) > 0 else None
                     signal_line = macd_data.iloc[-1, 1] if len(macd_data.columns) > 1 else None
                     histogram = macd_data.iloc[-1, 2] if len(macd_data.columns) > 2 else None
-                    if macd_line is not None and signal_line is not None:
+                    # NaN guard: MACD butuh cukup data untuk EMA 12, 26, dan signal 9
+                    if macd_line is not None and signal_line is not None and pd.notna(macd_line) and pd.notna(signal_line):
                         interpretation = (
                             "bullish" if macd_line > signal_line else "bearish"
                         )
                         result["macd"] = {
                             "macd_line": round(float(macd_line), 2),
                             "signal_line": round(float(signal_line), 2),
-                            "histogram": round(float(histogram), 2) if histogram is not None else None,
+                            "histogram": round(float(histogram), 2) if histogram is not None and pd.notna(histogram) else None,
                             "interpretation": interpretation,
                         }
 
@@ -94,46 +97,76 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                 sma = ta.sma(close, length=period)
                 if not sma.empty:
                     sma_value = sma.iloc[-1]
-                    current_price = close.iloc[-1]
-                    result[ind] = {
-                        "value": round(float(sma_value), 2),
-                        "price_vs_sma": "above" if current_price > sma_value else "below",
-                    }
+                    # NaN guard: skip jika data tidak cukup untuk period ini
+                    if pd.notna(sma_value):
+                        current_price = close.iloc[-1]
+                        result[ind] = {
+                            "value": round(float(sma_value), 2),
+                            "price_vs_sma": "above" if current_price > sma_value else "below",
+                        }
 
             elif ind.startswith("ema_"):
                 period = int(ind.split("_")[1])
                 ema = ta.ema(close, length=period)
                 if not ema.empty:
                     ema_value = ema.iloc[-1]
-                    current_price = close.iloc[-1]
-                    result[ind] = {
-                        "value": round(float(ema_value), 2),
-                        "price_vs_ema": "above" if current_price > ema_value else "below",
-                    }
+                    # NaN guard: skip jika data tidak cukup untuk period ini
+                    if pd.notna(ema_value):
+                        current_price = close.iloc[-1]
+                        result[ind] = {
+                            "value": round(float(ema_value), 2),
+                            "price_vs_ema": "above" if current_price > ema_value else "below",
+                        }
 
             elif ind == "bbands":
                 bbands = ta.bbands(close, length=20, std=2)
                 if bbands is not None and not bbands.empty:
+                    # Use column names instead of hardcoded indices (more robust)
+                    # pandas_ta returns: BBL_20_2.0, BBM_20_2.0, BBU_20_2.0, BBB_20_2.0, BBP_20_2.0
+                    bb_cols = bbands.columns.tolist()
+                    upper_col = [c for c in bb_cols if 'BBU' in c][0] if any('BBU' in c for c in bb_cols) else bb_cols[2]
+                    middle_col = [c for c in bb_cols if 'BBM' in c][0] if any('BBM' in c for c in bb_cols) else bb_cols[1]
+                    lower_col = [c for c in bb_cols if 'BBL' in c][0] if any('BBL' in c for c in bb_cols) else bb_cols[0]
+                    
+                    current_price_bb = close.iloc[-1]
+                    upper_val = float(bbands[upper_col].iloc[-1])
+                    middle_val = float(bbands[middle_col].iloc[-1])
+                    lower_val = float(bbands[lower_col].iloc[-1])
+                    
+                    # Position dalam band (untuk IDX, penting untuk timing)
+                    bb_width = upper_val - lower_val
+                    bb_position = ((current_price_bb - lower_val) / bb_width * 100) if bb_width > 0 else 50
+                    
                     result["bbands"] = {
-                        "upper": round(float(bbands.iloc[-1, 0]), 2),
-                        "middle": round(float(bbands.iloc[-1, 1]), 2),
-                        "lower": round(float(bbands.iloc[-1, 2]), 2),
+                        "upper": round(upper_val, 2),
+                        "middle": round(middle_val, 2),
+                        "lower": round(lower_val, 2),
+                        "width": round(bb_width, 2),
+                        "position_pct": round(bb_position, 1),  # 0=lower, 50=middle, 100=upper
+                        "interpretation": "overbought" if bb_position > 80 else "oversold" if bb_position < 20 else "neutral"
                     }
 
             elif ind == "stoch":
                 stoch = ta.stoch(high, low, close, k=14, d=3)
                 if stoch is not None and not stoch.empty:
-                    result["stoch"] = {
-                        "k": round(float(stoch.iloc[-1, 0]), 2),
-                        "d": round(float(stoch.iloc[-1, 1]), 2),
-                    }
+                    stoch_k = stoch.iloc[-1, 0]
+                    stoch_d = stoch.iloc[-1, 1]
+                    # NaN guard
+                    if pd.notna(stoch_k) and pd.notna(stoch_d):
+                        result["stoch"] = {
+                            "k": round(float(stoch_k), 2),
+                            "d": round(float(stoch_d), 2),
+                        }
 
             elif ind == "atr":
                 atr = ta.atr(high, low, close, length=14)
                 if not atr.empty:
-                    result["atr"] = {
-                        "value": round(float(atr.iloc[-1]), 2),
-                    }
+                    atr_value = atr.iloc[-1]
+                    # NaN guard
+                    if pd.notna(atr_value):
+                        result["atr"] = {
+                            "value": round(float(atr_value), 2),
+                        }
 
             elif ind == "obv":
                 obv = ta.obv(close, volume)
@@ -158,7 +191,9 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                     plus_di = adx_data['DMP_14'].iloc[-1] if 'DMP_14' in adx_data.columns else None
                     minus_di = adx_data['DMN_14'].iloc[-1] if 'DMN_14' in adx_data.columns else None
 
-                    if adx_value is not None and plus_di is not None and minus_di is not None:
+                    # NaN guard: pastikan semua nilai valid
+                    if (adx_value is not None and plus_di is not None and minus_di is not None and
+                        pd.notna(adx_value) and pd.notna(plus_di) and pd.notna(minus_di)):
                         # Interpret trend strength based on ADX value
                         if adx_value > 25:
                             trend_strength = "strong"
@@ -271,6 +306,7 @@ def calculate_support_resistance(df: pd.DataFrame) -> Dict[str, List[float]]:
 def determine_overall_signal(indicators: Dict[str, Any], current_price: float) -> str:
     """
     Determine overall signal from indicators.
+    ADAPTED FOR IDX MARKET - Di pasar Indonesia, momentum bisa extended.
 
     Args:
         indicators: Dictionary of calculated indicators
@@ -281,33 +317,95 @@ def determine_overall_signal(indicators: Dict[str, Any], current_price: float) -
     """
     bullish_signals = 0
     bearish_signals = 0
+    warnings = []
 
-    # Check RSI
+    # Check RSI - Di IDX, RSI adalah WARNING bukan direct signal
+    # Saham bandar bisa overbought berhari-hari, oversold juga bisa turun terus
     if "rsi_14" in indicators:
-        rsi_value = indicators["rsi_14"]["value"]
-        if rsi_value < 30:
-            bullish_signals += 1
-        elif rsi_value > 70:
-            bearish_signals += 1
+        rsi_value = indicators["rsi_14"].get("value")
+        # NaN guard: pastikan value valid
+        if rsi_value is not None and pd.notna(rsi_value):
+            # RSI sebagai FILTER, bukan signal generator
+            if rsi_value < 30:
+                # Oversold = POTENTIAL reversal, tapi bisa jadi falling knife
+                # Jangan langsung bullish, cek konfirmasi lain
+                warnings.append("oversold")
+            elif rsi_value > 80:  # Extreme overbought (dinaikkan dari 70)
+                # Di IDX, RSI 70-80 masih bisa lanjut naik
+                # Baru warning di >80
+                warnings.append("extreme_overbought")
+            elif rsi_value > 70:
+                # Overbought tapi di IDX ini masih bisa momentum
+                # Tidak langsung bearish
+                pass
 
-    # Check MACD
+    # Check MACD - Lebih reliable di IDX
     if "macd" in indicators:
-        if indicators["macd"]["interpretation"] == "bullish":
-            bullish_signals += 1
-        else:
-            bearish_signals += 1
-
-    # Check SMA/EMA
-    for key in ["sma_20", "sma_50", "ema_50"]:
-        if key in indicators:
-            if indicators[key].get("price_vs_sma") == "above" or indicators[key].get("price_vs_ema") == "above":
-                bullish_signals += 1
+        macd_interp = indicators["macd"].get("interpretation")
+        if macd_interp:  # NaN guard
+            if macd_interp == "bullish":
+                bullish_signals += 1.5  # Higher weight untuk MACD
             else:
-                bearish_signals += 1
+                bearish_signals += 1.5
 
-    if bullish_signals > bearish_signals:
+    # Check ADX untuk trend strength (penting di IDX)
+    if "adx" in indicators:
+        adx_data = indicators["adx"]
+        adx_value = adx_data.get("value")
+        # NaN guard: pastikan ADX value valid
+        if adx_value is not None and pd.notna(adx_value):
+            if adx_data.get("trend_strength") == "strong":
+                # Strong trend - follow the direction
+                if adx_data.get("trend_direction") == "bullish":
+                    bullish_signals += 2  # High weight for strong bullish trend
+                else:
+                    bearish_signals += 2
+            elif adx_data.get("trend_strength") == "developing":
+                if adx_data.get("trend_direction") == "bullish":
+                    bullish_signals += 1
+                else:
+                    bearish_signals += 1
+
+    # Check SMA/EMA - Price position vs MA (DYNAMIC - berdasarkan MA yang tersedia)
+    ma_above_count = 0
+    ma_below_count = 0
+    ma_total_available = 0
+    
+    # Cari semua MA yang ada di indicators (tidak hardcode list)
+    for key, value in indicators.items():
+        if key.startswith("sma_") or key.startswith("ema_"):
+            # NaN guard: cek apakah MA value valid
+            ma_value = value.get("value")
+            if ma_value is not None and pd.notna(ma_value):
+                ma_total_available += 1
+                position = value.get("price_vs_sma") or value.get("price_vs_ema")
+                if position == "above":
+                    ma_above_count += 1
+                elif position == "below":
+                    ma_below_count += 1
+    
+    # Dynamic MA alignment scoring berdasarkan MA yang tersedia
+    if ma_total_available > 0:
+        alignment_ratio = ma_above_count / ma_total_available
+        
+        if alignment_ratio == 1.0:  # Semua MA bullish
+            bullish_signals += 2
+        elif alignment_ratio >= 0.67:  # Mayoritas bullish
+            bullish_signals += 1
+        elif alignment_ratio == 0:  # Semua MA bearish
+            bearish_signals += 2
+        elif alignment_ratio <= 0.33:  # Mayoritas bearish
+            bearish_signals += 1
+        # 0.34-0.66 = mixed, no bonus
+
+    # Determine signal with IDX-specific logic
+    if bullish_signals > bearish_signals + 1:  # Need clear margin
+        if "extreme_overbought" in warnings:
+            return "bullish_but_overbought"  # Bullish tapi hati-hati
         return "bullish"
-    elif bearish_signals > bullish_signals:
+    elif bearish_signals > bullish_signals + 1:
+        if "oversold" in warnings:
+            return "bearish_but_oversold"  # Bearish tapi mungkin bounce
         return "bearish"
     else:
         return "neutral"
@@ -338,6 +436,10 @@ async def get_technical_indicators(args: dict[str, Any]) -> dict[str, Any]:
         df = pd.DataFrame(df_data)
         df["Date"] = pd.to_datetime(df["date"])
         df.set_index("Date", inplace=True)
+        
+        # CRITICAL: Sort by date ascending untuk memastikan indikator dihitung dengan benar
+        # Beberapa API return data descending (terbaru dulu), yang akan bikin EMA/MACD/RSI salah
+        df.sort_index(inplace=True)
 
         # Rename columns to match pandas_ta expectations (capitalize first letter)
         df.rename(columns={

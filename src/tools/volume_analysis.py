@@ -1,6 +1,6 @@
 """Tool for volume analysis."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 import pandas as pd
 import numpy as np
 from mcp.types import Tool
@@ -98,8 +98,8 @@ def calculate_volume_metrics(df: pd.DataFrame) -> Dict[str, Any]:
     volume_price_corr = 0.0
     if len(volumes) >= 10 and len(closes) >= 10:
         # Calculate price changes
-        price_changes = np.diff(closes) / closes[:-1]
-        volume_changes = np.diff(volumes) / (volumes[:-1] + 1)  # Add 1 to avoid division by zero
+        price_changes = np.diff(closes) / np.maximum(closes[:-1], 0.01)  # Avoid div by zero properly
+        volume_changes = np.diff(volumes) / np.maximum(volumes[:-1], 1)  # Use max instead of adding 1
         
         # Calculate correlation
         if len(price_changes) > 1 and len(volume_changes) > 1:

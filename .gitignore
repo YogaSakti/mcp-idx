@@ -32,6 +32,8 @@ ENV/
 *.swp
 *.swo
 *~
+.cursor/
+.kiro
 
 # Logs
 *.log
@@ -52,6 +54,7 @@ htmlcov/
 
 # Analysis Results
 analisis/
+analysis/
 
 # Monitor logs and runtime data
 monitor/*.log
@@ -64,3 +67,11 @@ test_backtesting.py
 tests/stock_signal_now.py
 tests/stock_screener.py
 tests/test_strategy.py
+
+# Private API tokens & scripts (DO NOT PUSH!)
+tests/bearer.txt
+tests/stockbit_broker.py
+tests/signal_combo.py
+tests/backtest_signal.py
+tests/signal_result_*.txt
+tests/bsjp_*.txt

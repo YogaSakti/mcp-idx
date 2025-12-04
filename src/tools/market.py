@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 from mcp.types import Tool
 from src.utils.yahoo import yahoo_client, YahooFinanceError
-from src.utils.helpers import format_ticker, is_market_hours
+from src.utils.helpers import is_market_hours
 
 
 def get_market_summary_tool() -> Tool:

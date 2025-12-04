@@ -1,6 +1,6 @@
 """Tool for calculating Fibonacci retracement and extension levels."""
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 import pandas as pd
 import numpy as np
 from mcp.types import Tool
@@ -111,6 +111,11 @@ def calculate_fibonacci_extensions(
 ) -> Dict[str, float]:
     """
     Calculate Fibonacci extension levels.
+    
+    Extension = proyeksi target harga BEYOND swing high/low
+    Formula yang benar:
+    - Uptrend: swing_low + (range × ratio) → target di atas swing_high
+    - Downtrend: swing_high - (range × ratio) → target di bawah swing_low
 
     Args:
         swing_high: Swing high price
@@ -122,23 +127,26 @@ def calculate_fibonacci_extensions(
     """
     diff = swing_high - swing_low
 
-    # Extension ratios
+    # Extension ratios (beyond 100%)
     ext_ratios = {
         "127.2%": 1.272,
         "161.8%": 1.618,
         "200.0%": 2.000,
+        "261.8%": 2.618,  # Added for IDX yang sering ARA beruntun
     }
 
     levels = {}
 
     if is_uptrend:
-        # For uptrend: extensions above swing high
+        # For uptrend: extensions proyeksi dari swing_low ke atas
+        # Target = swing_low + (range × ratio)
         for label, ratio in ext_ratios.items():
-            levels[label] = round(swing_high + (diff * (ratio - 1)), 2)
+            levels[label] = round(swing_low + (diff * ratio), 2)
     else:
-        # For downtrend: extensions below swing low
+        # For downtrend: extensions proyeksi dari swing_high ke bawah
+        # Target = swing_high - (range × ratio)
         for label, ratio in ext_ratios.items():
-            levels[label] = round(swing_low - (diff * (ratio - 1)), 2)
+            levels[label] = round(swing_high - (diff * ratio), 2)
 
     return levels
 

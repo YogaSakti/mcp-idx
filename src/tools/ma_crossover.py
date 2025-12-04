@@ -16,7 +16,8 @@ def get_ma_crossover_tool() -> Tool:
         name="get_ma_crossovers",
         description=(
             "Detect Moving Average crossovers (Golden Cross, Death Cross, EMA crossovers) "
-            "untuk Indonesian stocks. Returns recent crossovers dalam 30 hari terakhir."
+            "untuk Indonesian stocks. Includes SMA 20/50, SMA 50/200, EMA 9/21, EMA 12/26, "
+            "MA distance analysis, and signal strength rating."
         ),
         inputSchema={
             "type": "object",
@@ -62,6 +63,10 @@ def detect_crossover(
     crossovers = []
     cutoff_date = datetime.now() - timedelta(days=lookback_days)
 
+    # Handle None or empty series
+    if fast_ma is None or slow_ma is None:
+        return crossovers
+    
     # Need at least 2 data points to detect crossover
     if len(fast_ma) < 2 or len(slow_ma) < 2:
         return crossovers
@@ -100,6 +105,133 @@ def detect_crossover(
             })
 
     return crossovers
+
+
+def calculate_ma_distance(price: float, ma_value: float) -> Dict[str, Any]:
+    """Calculate distance between price and MA."""
+    if pd.isna(ma_value) or ma_value == 0:
+        return {"distance_pct": 0, "position": "unknown"}
+    
+    distance_pct = ((price - ma_value) / ma_value) * 100
+    
+    if distance_pct > 10:
+        position = "far_above"
+        status = "🔴 Overbought - Jauh di atas MA"
+    elif distance_pct > 5:
+        position = "above"
+        status = "🟡 Di atas MA"
+    elif distance_pct > 0:
+        position = "slightly_above"
+        status = "🟢 Sedikit di atas MA"
+    elif distance_pct > -5:
+        position = "slightly_below"
+        status = "🟢 Sedikit di bawah MA"
+    elif distance_pct > -10:
+        position = "below"
+        status = "🟡 Di bawah MA"
+    else:
+        position = "far_below"
+        status = "🔴 Oversold - Jauh di bawah MA"
+    
+    return {
+        "distance_pct": round(distance_pct, 2),
+        "position": position,
+        "status": status
+    }
+
+
+def calculate_signal_strength(
+    alignments: Dict[str, str],
+    crossovers: Dict[str, List],
+    ma_distances: Dict[str, Dict],
+    lookback_days: int
+) -> Dict[str, Any]:
+    """
+    Calculate overall signal strength based on MA analysis.
+    
+    Returns:
+        Dictionary with signal strength (0-100) and recommendation
+    """
+    score = 50  # Start neutral
+    factors = []
+    
+    # Factor 1: MA Alignment (max ±20 points)
+    bullish_alignments = sum(1 for v in alignments.values() if v == "bullish")
+    bearish_alignments = sum(1 for v in alignments.values() if v == "bearish")
+    total_alignments = len(alignments)
+    
+    if total_alignments > 0:
+        alignment_ratio = (bullish_alignments - bearish_alignments) / total_alignments
+        score += alignment_ratio * 20
+        
+        if bullish_alignments == total_alignments:
+            factors.append("✅ Semua MA alignment bullish")
+        elif bearish_alignments == total_alignments:
+            factors.append("⚠️ Semua MA alignment bearish")
+        else:
+            factors.append(f"🟡 Mixed alignment ({bullish_alignments} bullish, {bearish_alignments} bearish)")
+    
+    # Factor 2: Recent Crossovers (max ±20 points)
+    recent_bullish = 0
+    recent_bearish = 0
+    
+    for ma_type, crosses in crossovers.items():
+        for cross in crosses:
+            if cross["signal"] == "bullish":
+                recent_bullish += 1
+            else:
+                recent_bearish += 1
+    
+    crossover_score = (recent_bullish - recent_bearish) * 10
+    score += min(20, max(-20, crossover_score))
+    
+    if recent_bullish > recent_bearish:
+        factors.append(f"📈 {recent_bullish} bullish crossover(s) recent")
+    elif recent_bearish > recent_bullish:
+        factors.append(f"📉 {recent_bearish} bearish crossover(s) recent")
+    
+    # Factor 3: Price vs MA200 distance (max ±10 points)
+    if "sma_200" in ma_distances:
+        dist = ma_distances["sma_200"]["distance_pct"]
+        if 0 < dist < 10:
+            score += 10
+            factors.append("🟢 Harga di atas SMA200 (uptrend)")
+        elif dist >= 10:
+            score += 5  # Too extended
+            factors.append("🟡 Harga terlalu jauh dari SMA200")
+        elif -10 < dist < 0:
+            score -= 5
+            factors.append("🟡 Harga di bawah SMA200")
+        else:
+            score -= 10
+            factors.append("🔴 Harga jauh di bawah SMA200 (downtrend)")
+    
+    # Clamp score to 0-100
+    score = max(0, min(100, score))
+    
+    # Determine signal
+    if score >= 70:
+        signal = "🟢 STRONG BUY"
+        action = "Entry dengan confidence tinggi"
+    elif score >= 55:
+        signal = "🟢 BUY"
+        action = "Entry dengan SL ketat"
+    elif score >= 45:
+        signal = "🟡 NEUTRAL"
+        action = "Wait for confirmation"
+    elif score >= 30:
+        signal = "🔴 SELL"
+        action = "Consider exit atau short"
+    else:
+        signal = "🔴 STRONG SELL"
+        action = "Exit atau hindari buy"
+    
+    return {
+        "score": round(score),
+        "signal": signal,
+        "action": action,
+        "factors": factors
+    }
 
 
 async def get_ma_crossovers(args: Dict[str, Any]) -> Dict[str, Any]:
@@ -155,71 +287,133 @@ async def get_ma_crossovers(args: Dict[str, Any]) -> Dict[str, Any]:
 
         close = df['Close']
         dates = df.index
+        current_price = float(close.iloc[-1])
 
-        # Calculate moving averages
-        sma_50 = ta.sma(close, length=50)
-        sma_200 = ta.sma(close, length=200)
-        ema_12 = ta.ema(close, length=12)
-        ema_26 = ta.ema(close, length=26)
+        # Calculate ALL moving averages (with None handling)
+        try:
+            sma_20 = ta.sma(close, length=20)
+            sma_50 = ta.sma(close, length=50)
+            sma_200 = ta.sma(close, length=200) if len(close) >= 200 else None
+            ema_9 = ta.ema(close, length=9)
+            ema_12 = ta.ema(close, length=12)
+            ema_21 = ta.ema(close, length=21)
+            ema_26 = ta.ema(close, length=26)
+        except Exception:
+            sma_20 = sma_50 = sma_200 = ema_9 = ema_12 = ema_21 = ema_26 = None
 
         result = {
             "ticker": ticker,
             "period": period,
             "lookback_days": lookback_days,
-            "current_price": round(float(close.iloc[-1]), 2),
+            "current_price": round(current_price, 2),
             "crossovers": {},
         }
 
-        # Detect Golden/Death Cross (SMA 50 x SMA 200)
-        golden_death_cross = detect_crossover(sma_50, sma_200, dates, lookback_days)
-        if golden_death_cross:
-            result["crossovers"]["sma_50_200"] = golden_death_cross
+        # Detect ALL crossovers
+        # 1. SMA 20 x SMA 50 (Short-term trend)
+        sma_20_50_cross = detect_crossover(sma_20, sma_50, dates, lookback_days)
+        if sma_20_50_cross:
+            result["crossovers"]["sma_20_50"] = sma_20_50_cross
 
-        # Detect EMA 12 x EMA 26 crossovers
-        ema_crossovers = detect_crossover(ema_12, ema_26, dates, lookback_days)
-        if ema_crossovers:
-            result["crossovers"]["ema_12_26"] = ema_crossovers
+        # 2. SMA 50 x SMA 200 (Golden Cross / Death Cross)
+        sma_50_200_cross = detect_crossover(sma_50, sma_200, dates, lookback_days)
+        if sma_50_200_cross:
+            result["crossovers"]["sma_50_200"] = sma_50_200_cross
 
-        # Current MA positions
+        # 3. EMA 9 x EMA 21 (Swing trading)
+        ema_9_21_cross = detect_crossover(ema_9, ema_21, dates, lookback_days)
+        if ema_9_21_cross:
+            result["crossovers"]["ema_9_21"] = ema_9_21_cross
+
+        # 4. EMA 12 x EMA 26 (MACD style)
+        ema_12_26_cross = detect_crossover(ema_12, ema_26, dates, lookback_days)
+        if ema_12_26_cross:
+            result["crossovers"]["ema_12_26"] = ema_12_26_cross
+
+        # Current MA values
         current_mas = {}
-        if not pd.isna(sma_50.iloc[-1]):
-            current_mas["sma_50"] = round(float(sma_50.iloc[-1]), 2)
-        if not pd.isna(sma_200.iloc[-1]):
-            current_mas["sma_200"] = round(float(sma_200.iloc[-1]), 2)
-        if not pd.isna(ema_12.iloc[-1]):
-            current_mas["ema_12"] = round(float(ema_12.iloc[-1]), 2)
-        if not pd.isna(ema_26.iloc[-1]):
-            current_mas["ema_26"] = round(float(ema_26.iloc[-1]), 2)
+        ma_list = [
+            ("sma_20", sma_20), ("sma_50", sma_50), ("sma_200", sma_200),
+            ("ema_9", ema_9), ("ema_12", ema_12), ("ema_21", ema_21), ("ema_26", ema_26)
+        ]
+        
+        for name, ma in ma_list:
+            if ma is not None and len(ma) > 0 and not pd.isna(ma.iloc[-1]):
+                current_mas[name] = round(float(ma.iloc[-1]), 2)
 
         result["current_mas"] = current_mas
 
+        # MA Distance Analysis (Price vs each MA)
+        ma_distances = {}
+        for name, value in current_mas.items():
+            ma_distances[name] = calculate_ma_distance(current_price, value)
+        
+        result["ma_distance"] = ma_distances
+
         # Current alignment (bullish if fast > slow)
         alignments = {}
-        if "sma_50" in current_mas and "sma_200" in current_mas:
-            alignments["sma_50_200"] = "bullish" if current_mas["sma_50"] > current_mas["sma_200"] else "bearish"
-        if "ema_12" in current_mas and "ema_26" in current_mas:
-            alignments["ema_12_26"] = "bullish" if current_mas["ema_12"] > current_mas["ema_26"] else "bearish"
+        alignment_pairs = [
+            ("sma_20_50", "sma_20", "sma_50"),
+            ("sma_50_200", "sma_50", "sma_200"),
+            ("ema_9_21", "ema_9", "ema_21"),
+            ("ema_12_26", "ema_12", "ema_26"),
+        ]
+        
+        for pair_name, fast, slow in alignment_pairs:
+            if fast in current_mas and slow in current_mas:
+                alignments[pair_name] = "bullish" if current_mas[fast] > current_mas[slow] else "bearish"
 
         result["current_alignment"] = alignments
 
+        # Calculate Signal Strength
+        signal_strength = calculate_signal_strength(
+            alignments, 
+            result["crossovers"], 
+            ma_distances, 
+            lookback_days
+        )
+        result["signal_strength"] = signal_strength
+
         # Trading insights
         insights = []
-        if golden_death_cross:
-            latest = golden_death_cross[-1]
+        
+        # Golden/Death Cross insights
+        if sma_50_200_cross:
+            latest = sma_50_200_cross[-1]
             if latest["signal"] == "bullish":
-                insights.append(f"✅ Golden Cross detected on {latest['date']} - Long-term bullish signal")
+                insights.append(f"✅ Golden Cross on {latest['date']} - Major bullish signal!")
             else:
-                insights.append(f"⚠️ Death Cross detected on {latest['date']} - Long-term bearish signal")
-
-        if ema_crossovers:
-            latest = ema_crossovers[-1]
+                insights.append(f"⚠️ Death Cross on {latest['date']} - Major bearish signal!")
+        
+        # Short-term trend (SMA 20/50)
+        if sma_20_50_cross:
+            latest = sma_20_50_cross[-1]
+            signal_type = "bullish" if latest["signal"] == "bullish" else "bearish"
+            insights.append(f"📊 SMA 20/50 {signal_type} cross on {latest['date']} - Short-term trend change")
+        
+        # Swing trading (EMA 9/21)
+        if ema_9_21_cross:
+            latest = ema_9_21_cross[-1]
             if latest["signal"] == "bullish":
-                insights.append(f"📈 EMA bullish crossover on {latest['date']} - Short-term bullish momentum")
+                insights.append(f"📈 EMA 9/21 bullish on {latest['date']} - Swing buy signal")
             else:
-                insights.append(f"📉 EMA bearish crossover on {latest['date']} - Short-term bearish momentum")
+                insights.append(f"📉 EMA 9/21 bearish on {latest['date']} - Swing sell signal")
 
-        if not golden_death_cross and not ema_crossovers:
-            insights.append("No crossovers detected in the lookback period")
+        # MACD style (EMA 12/26)
+        if ema_12_26_cross:
+            latest = ema_12_26_cross[-1]
+            if latest["signal"] == "bullish":
+                insights.append(f"📈 EMA 12/26 bullish on {latest['date']} - Momentum bullish")
+            else:
+                insights.append(f"📉 EMA 12/26 bearish on {latest['date']} - Momentum bearish")
+
+        # MA Distance insights
+        if "sma_200" in ma_distances:
+            dist_info = ma_distances["sma_200"]
+            insights.append(f"📏 Harga {dist_info['distance_pct']}% dari SMA200 - {dist_info['status']}")
+
+        if not any([sma_20_50_cross, sma_50_200_cross, ema_9_21_cross, ema_12_26_cross]):
+            insights.append("⚪ No crossovers detected in lookback period")
 
         result["insights"] = insights
 

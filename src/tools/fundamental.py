@@ -5,6 +5,7 @@ Analisis laporan keuangan, earnings, analyst ratings, dan dividend history
 
 from ..utils.yahoo import YahooFinanceClient
 from ..utils.validators import validate_ticker
+from ..utils.helpers import format_ticker
 from mcp.types import Tool
 import yfinance as yf
 import pandas as pd
@@ -18,6 +19,7 @@ yahoo_api = YahooFinanceClient()
 def analyze_financial_statements(ticker: str) -> dict:
     """
     Analisis lengkap laporan keuangan (Income Statement, Balance Sheet, Cash Flow).
+    Termasuk valuation metrics (PE Ratio, PBV, dll).
     
     Args:
         ticker: Stock ticker
@@ -26,9 +28,11 @@ def analyze_financial_statements(ticker: str) -> dict:
         Dictionary dengan analisis financial statements
     """
     ticker = validate_ticker(ticker)
+    ticker_jk = format_ticker(ticker)
     
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker_jk)
+        info = stock.info
         
         # Get financial statements
         income_stmt = stock.income_stmt
@@ -42,6 +46,66 @@ def analyze_financial_statements(ticker: str) -> dict:
             "ticker": ticker.replace('.JK', ''),
             "last_updated": datetime.now().strftime("%Y-%m-%d"),
         }
+        
+        # === VALUATION METRICS from Info ===
+        current_price = info.get('currentPrice', 0) or info.get('regularMarketPrice', 0)
+        
+        valuation = {
+            "current_price": current_price,
+            "market_cap": info.get('marketCap', 0),
+            "enterprise_value": info.get('enterpriseValue', 0),
+        }
+        
+        # PE Ratio
+        pe_trailing = info.get('trailingPE', None)
+        pe_forward = info.get('forwardPE', None)
+        valuation['pe_trailing'] = round(pe_trailing, 2) if pe_trailing else None
+        valuation['pe_forward'] = round(pe_forward, 2) if pe_forward else None
+        
+        # PBV (Price to Book Value)
+        pbv = info.get('priceToBook', None)
+        valuation['pbv'] = round(pbv, 2) if pbv else None
+        
+        # Other valuation metrics
+        ps_ratio = info.get('priceToSalesTrailing12Months', None)
+        valuation['ps_ratio'] = round(ps_ratio, 2) if ps_ratio else None
+        
+        ev_ebitda = info.get('enterpriseToEbitda', None)
+        valuation['ev_to_ebitda'] = round(ev_ebitda, 2) if ev_ebitda else None
+        
+        ev_revenue = info.get('enterpriseToRevenue', None)
+        valuation['ev_to_revenue'] = round(ev_revenue, 2) if ev_revenue else None
+        
+        # PEG Ratio
+        peg = info.get('pegRatio', None)
+        valuation['peg_ratio'] = round(peg, 2) if peg else None
+        
+        # Valuation Assessment
+        valuation_signals = []
+        
+        if pe_trailing:
+            if pe_trailing < 10:
+                valuation_signals.append("🟢 PE rendah (<10) - Potentially undervalued")
+            elif pe_trailing < 15:
+                valuation_signals.append("🟢 PE wajar (10-15)")
+            elif pe_trailing < 25:
+                valuation_signals.append("🟡 PE moderate (15-25)")
+            else:
+                valuation_signals.append("🔴 PE tinggi (>25) - Potentially overvalued")
+        
+        if pbv:
+            if pbv < 1:
+                valuation_signals.append("🟢 PBV < 1 - Trading below book value")
+            elif pbv < 2:
+                valuation_signals.append("🟢 PBV wajar (1-2)")
+            elif pbv < 5:
+                valuation_signals.append("🟡 PBV moderate (2-5)")
+            else:
+                valuation_signals.append("🔴 PBV tinggi (>5)")
+        
+        valuation['assessment'] = valuation_signals if valuation_signals else ["Data tidak tersedia"]
+        
+        result['valuation'] = valuation
         
         # Parse Income Statement (latest year)
         if not income_stmt.empty:
@@ -105,36 +169,83 @@ def analyze_financial_statements(ticker: str) -> dict:
             
             result['cash_flow'] = cashflow_data
         
-        # Financial Health Score
+        # Financial Health Score (now out of 100 with more factors)
         score = 0
+        max_score = 100
         health_issues = []
+        health_positives = []
         
+        # 1. Profitability (25 points)
         if 'income_statement' in result:
-            if result['income_statement'].get('net_margin', 0) > 10:
+            net_margin = result['income_statement'].get('net_margin', 0)
+            if net_margin > 15:
                 score += 25
-            elif result['income_statement'].get('net_margin', 0) < 5:
-                health_issues.append("Low profit margin")
+                health_positives.append("✅ Excellent profit margin (>15%)")
+            elif net_margin > 10:
+                score += 20
+                health_positives.append("✅ Good profit margin (>10%)")
+            elif net_margin > 5:
+                score += 10
+            elif net_margin < 5:
+                health_issues.append("⚠️ Low profit margin (<5%)")
         
+        # 2. Liquidity (20 points)
         if 'balance_sheet' in result:
-            if result['balance_sheet'].get('current_ratio', 0) > 1.5:
-                score += 25
-            elif result['balance_sheet'].get('current_ratio', 0) < 1:
-                health_issues.append("Low liquidity (current ratio < 1)")
-            
-            if result['balance_sheet'].get('debt_to_equity', 0) < 100:
-                score += 25
-            elif result['balance_sheet'].get('debt_to_equity', 0) > 200:
-                health_issues.append("High debt levels")
+            current_ratio = result['balance_sheet'].get('current_ratio', 0)
+            if current_ratio > 2:
+                score += 20
+                health_positives.append("✅ Strong liquidity (CR > 2)")
+            elif current_ratio > 1.5:
+                score += 15
+            elif current_ratio > 1:
+                score += 10
+            elif current_ratio < 1:
+                health_issues.append("🔴 Low liquidity (current ratio < 1)")
         
+        # 3. Leverage (20 points)
+        if 'balance_sheet' in result:
+            dte = result['balance_sheet'].get('debt_to_equity', 0)
+            if dte < 50:
+                score += 20
+                health_positives.append("✅ Low debt (D/E < 50%)")
+            elif dte < 100:
+                score += 15
+            elif dte < 150:
+                score += 10
+            elif dte > 200:
+                health_issues.append("🔴 High debt levels (D/E > 200%)")
+        
+        # 4. Cash Flow (20 points)
         if 'cash_flow' in result:
-            if result['cash_flow'].get('operating_cash_flow', 0) > 0:
-                score += 25
+            ocf = result['cash_flow'].get('operating_cash_flow', 0)
+            fcf = result['cash_flow'].get('free_cash_flow', 0)
+            if ocf > 0 and fcf > 0:
+                score += 20
+                health_positives.append("✅ Positive cash flow")
+            elif ocf > 0:
+                score += 10
             else:
-                health_issues.append("Negative operating cash flow")
+                health_issues.append("🔴 Negative operating cash flow")
+        
+        # 5. Valuation (15 points)
+        if 'valuation' in result:
+            pe = result['valuation'].get('pe_trailing')
+            pbv = result['valuation'].get('pbv')
+            
+            if pe and pe < 15:
+                score += 8
+            elif pe and pe > 30:
+                health_issues.append("⚠️ High PE ratio (>30)")
+            
+            if pbv and pbv < 2:
+                score += 7
+            elif pbv and pbv > 5:
+                health_issues.append("⚠️ High PBV (>5)")
         
         result['financial_health'] = {
-            "score": score,
-            "rating": "Excellent" if score >= 80 else "Good" if score >= 60 else "Fair" if score >= 40 else "Poor",
+            "score": min(score, max_score),
+            "rating": "🟢 Excellent" if score >= 80 else "🟢 Good" if score >= 60 else "🟡 Fair" if score >= 40 else "🔴 Poor",
+            "positives": health_positives if health_positives else ["None"],
             "issues": health_issues if health_issues else ["None"]
         }
         
@@ -155,9 +266,10 @@ def analyze_earnings_growth(ticker: str) -> dict:
         Dictionary dengan analisis earnings growth
     """
     ticker = validate_ticker(ticker)
+    ticker_jk = format_ticker(ticker)
     
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker_jk)
         
         # Get income statement for historical data
         income_stmt = stock.income_stmt
@@ -251,9 +363,10 @@ def analyze_analyst_ratings(ticker: str) -> dict:
         Dictionary dengan analyst ratings dan estimates
     """
     ticker = validate_ticker(ticker)
+    ticker_jk = format_ticker(ticker)
     
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker_jk)
         
         result = {
             "ticker": ticker.replace('.JK', ''),
@@ -368,9 +481,10 @@ def analyze_dividend_history(ticker: str) -> dict:
         Dictionary dengan dividend analysis
     """
     ticker = validate_ticker(ticker)
+    ticker_jk = format_ticker(ticker)
     
     try:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker_jk)
         info = stock.info
         
         result = {

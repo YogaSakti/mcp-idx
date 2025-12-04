@@ -1,6 +1,6 @@
 """Tool for comparing stocks."""
 
-from typing import Any, List, Dict
+from typing import Any, Dict
 import pandas as pd
 import numpy as np
 from mcp.types import Tool

@@ -150,7 +150,7 @@ MCP adalah protokol open-source yang memungkinkan AI clients berkomunikasi denga
 
 ## 📚 Available Tools
 
-**Total: 21 tools** (7 new: Foreign Flow, Bandarmology, Tape Reading, Financial Statements, Earnings Growth, Analyst Ratings, Dividend History)
+**Total: 23 tools** (9 new: Foreign Flow, Bandarmology, Tape Reading, Financial Statements, Earnings Growth, Analyst Ratings, Dividend History, **Breakout Detection**, **Divergence Detection**)
 
 > **ℹ️ Format Ticker:** Input ticker bisa dengan atau tanpa suffix `.JK` (sistem otomatis menambahkan suffix jika tidak ada)  
 > Contoh: `BBCA`, `BBRI`, `TLKM` atau `BBCA.JK`, `BBRI.JK`, `TLKM.JK`
@@ -165,26 +165,37 @@ Data OHLCV untuk charting.
 - `period` (optional): 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, max
 - `interval` (optional): 1d, 1wk, 1mo
 
-### 3. `get_technical_indicators`
-Indikator teknikal untuk analisis.
+### 3. `get_technical_indicators` **(UPDATED!)**
+Indikator teknikal untuk analisis - **OPTIMIZED FOR IDX MARKET**.
 - `ticker` (required): Ticker IDX
-- `indicators` (optional): rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap, **adx**, **ichimoku (NEW!)**
+- `indicators` (optional): rsi, macd, sma_20, ema_50, bbands, stoch, atr, obv, vwap, **adx**, **ichimoku**
 - `period` (optional): 1mo, 3mo, 6mo, 1y
 
-**NEW: ADX (Average Directional Index)**
+**IDX-Specific Improvements:**
+- RSI interpretation adjusted (RSI 70-80 di IDX masih bisa momentum)
+- RSI >80 baru dianggap extreme overbought
+- Dynamic MA alignment scoring (tidak hardcode 3 MA)
+- NaN guards untuk data yang tidak lengkap
+- Data sorting (ascending) untuk kalkulasi indikator yang akurat
+
+**ADX (Average Directional Index)**
 - Mengukur kekuatan trend (strong, developing, weak)
 - Menentukan arah trend (bullish/bearish)
 - +DI dan -DI untuk konfirmasi
 - Interpretasi: ADX > 25 = strong trend, < 20 = weak/sideways
 
-**NEW: Ichimoku Cloud**
+**Ichimoku Cloud**
 - 5 komponen: Tenkan-sen, Kijun-sen, Senkou Span A/B, Chikou Span
 - Cloud color (bullish/bearish)
 - Price vs Cloud position (above/inside/below)
 - TK Cross signal
 - Overall trend signal (strong_bullish, bullish, neutral, bearish, strong_bearish)
 
-### 4. `get_fibonacci_levels` **(NEW!)**
+**Bollinger Bands (UPDATED)**
+- Added BB position % (0-100, posisi harga dalam band)
+- Added BB width untuk volatility measurement
+
+### 4. `get_fibonacci_levels` **(UPDATED!)**
 Fibonacci retracement dan extension levels untuk support/resistance analysis.
 - `ticker` (required): Ticker IDX
 - `period` (optional): 1mo, 3mo, 6mo, 1y (default: 3mo)
@@ -193,10 +204,11 @@ Fibonacci retracement dan extension levels untuk support/resistance analysis.
 **Features:**
 - Auto-detect swing high/low
 - 7 Retracement levels (0%, 23.6%, 38.2%, 50%, 61.8%, 78.6%, 100%)
-- 3 Extension levels (127.2%, 161.8%, 200%)
+- **4 Extension levels (127.2%, 161.8%, 200%, 261.8%)** - Added 261.8% untuk IDX yang sering ARA beruntun
 - Nearest support/resistance identification
 - Risk/reward ratio calculation
 - Trading insights & recommendations
+- **Fixed:** Extension formula sekarang mathematically correct
 
 ### 5. `get_ma_crossovers` **(NEW!)**
 Detect Moving Average crossovers untuk trading signals.
@@ -271,28 +283,36 @@ Analisis volatilitas saham.
 - `period` (optional): Periode analisis (30d, 90d, 1y, 2y) - default: 1y
 - Menghitung: Historical volatility (30d, 90d, 1y), Beta vs IHSG, ATR-based volatility, Risk level assessment
 
-### 15. `get_foreign_flow` **(NEW! 🔥)**
-Analisis aliran dana asing dan institusi (Smart Money).
+### 15. `get_foreign_flow` **(UPDATED! 🔥)**
+Analisis Smart Money Proxy berdasarkan volume-price action.
+
+⚠️ **DISCLAIMER:** Ini BUKAN real foreign net buy/sell dari BEI. Data institutional dari yfinance sering kosong untuk saham IDX. Tool ini fokus ke volume-price pattern untuk deteksi akumulasi/distribusi.
+
 - `ticker` (required): Ticker saham IDX
 - `period` (optional): 7d, 1mo, 3mo, 6mo (default: 1mo)
 
 **Features:**
-- Foreign ownership (insiders, institutions, float %)
+- Institutional proxy data (dengan disclaimer)
 - Accumulation/Distribution pattern detection
 - Volume trend analysis
-- Smart Money score & confidence rating
-- Institutional interest level
+- Smart Money Proxy score (berdasarkan volume-price action)
+- Division by zero guards untuk stability
 
-### 16. `get_bandarmology` **(NEW! 🔥)**
-Deteksi fase akumulasi/distribusi bandar.
+### 16. `get_bandarmology` **(UPDATED! 🔥)**
+Deteksi fase akumulasi/distribusi bandar - **OPTIMIZED FOR IDX MARKET**.
 - `ticker` (required): Ticker saham IDX
 - `period` (optional): 1mo, 3mo, 6mo, 1y (default: 3mo)
 
 **Features:**
 - 4 Phase detection: ACCUMULATION, MARKUP, DISTRIBUTION, MARKDOWN
+- 3 Volume Regime: LOW (<0.8x), NEUTRAL (0.8-1.2x), HIGH (>1.2x)
 - Phase strength & confidence rating
 - Price-volume action analysis
 - Bandar strength score
+- **NEW: ARA/ARB Detection** (Auto Rejection Atas/Bawah)
+  - Support tick size (fraksi harga IDX)
+  - Support FCA board (Papan Pemantauan Khusus, ±10%)
+  - Floor price handling (Rp50 regular, Rp1 PPK)
 - Trading recommendation dengan risk level
 
 ### 17. `get_tape_reading` **(NEW! 🔥)**
@@ -352,6 +372,48 @@ Analisis historis dividen & yield.
 - Consistency rating: High/Medium/Low
 - Years of continuous payments
 - Dividend rating: Excellent/Good/Fair/Poor/No Dividend
+
+### 22. `get_breakout_detection` **(NEW! 🚀)**
+Detect price breakout dari consolidation range.
+- `ticker` (required): Ticker saham IDX
+- `lookback` (optional): Periode lookback untuk consolidation range (default: 20)
+- `period` (optional): Periode data (default: 3mo)
+- `volume_threshold` (optional): Volume multiplier untuk konfirmasi (default: 1.5x)
+
+**Features:**
+- Consolidation range detection (support/resistance)
+- Breakout type: resistance_breakout, support_breakdown, testing_resistance, testing_support, inside_range
+- Breakout strength: strong, moderate, weak
+- Volume confirmation (1.5x+ average volume)
+- Target prices (61.8%, 100%, 161.8% range projection)
+- Stop loss calculation
+- Risk/Reward ratio
+- False breakout warning detection (rejection, decreasing volume, long wicks)
+- Trading signal dengan confidence level
+
+**Use Case:** Entry signal untuk momentum trading, detect potential breakout sebelum terjadi.
+
+### 23. `get_divergence_detection` **(NEW! 📉📈)**
+Detect divergence antara harga dan indikator (RSI, MACD, OBV).
+- `ticker` (required): Ticker saham IDX
+- `indicators` (optional): Indikator untuk cek divergence - rsi, macd, obv (default: semua)
+- `lookback` (optional): Periode lookback (default: 30)
+- `period` (optional): Periode data (default: 3mo)
+
+**Features:**
+- **Regular Divergence** (Reversal signals):
+  - Bullish: Price lower low + Indicator higher low → Potential UP reversal
+  - Bearish: Price higher high + Indicator lower high → Potential DOWN reversal
+- **Hidden Divergence** (Continuation signals):
+  - Bullish Hidden: Price higher low + Indicator lower low → Uptrend continues
+  - Bearish Hidden: Price lower high + Indicator higher high → Downtrend continues
+- Multi-indicator analysis (RSI, MACD Histogram, OBV)
+- Divergence strength rating (strong, moderate, weak)
+- Active divergence detection (recent, still valid)
+- Overall signal dengan confidence level
+- Indicator agreement check
+
+**Use Case:** Early warning signal untuk potential reversal SEBELUM terjadi. Combine dengan S/R dan volume untuk konfirmasi.
 
 ## 💬 Usage Examples
 
@@ -505,6 +567,31 @@ mcp-idx/
 - Pastikan MCP protocol didukung oleh AI client kamu
 
 Lihat [LOCAL_SETUP.md](LOCAL_SETUP.md) untuk troubleshooting lengkap.
+
+---
+
+## 📅 Changelog
+
+### v1.2.0 (2 Dec 2025) - IDX Market Optimization
+**Major Updates:**
+- 🇮🇩 **IDX Market Optimization** - All tools sekarang optimized untuk karakteristik pasar Indonesia
+- 🔧 **Fixed:** Fibonacci extension formula yang sebelumnya salah
+- 🔧 **Fixed:** RSI interpretation untuk IDX (RSI 70-80 masih bisa momentum)
+- 🔧 **Fixed:** Division by zero guards di semua tools
+- 🔧 **Fixed:** Data sorting untuk kalkulasi indikator yang akurat
+
+**New Features:**
+- ⚡ **ARA/ARB Detection** - Auto Rejection Atas/Bawah dengan:
+  - Tick size (fraksi harga) yang benar per range harga
+  - Support FCA board (Papan Pemantauan Khusus, ±10%)
+  - Floor price handling (Rp50 regular, Rp1 PPK)
+- 📊 **Dynamic MA Alignment** - Scoring berdasarkan MA yang tersedia
+- 📈 **BB Position %** - Posisi harga dalam Bollinger Band (0-100%)
+- 🎯 **Fibonacci 261.8%** - Extension level tambahan untuk saham ARA beruntun
+
+**Label Changes:**
+- `foreign_flow` → `smart_money_proxy` (lebih akurat karena bukan real BEI data)
+- Added disclaimers untuk data yang sumbernya kurang reliable
 
 ---
 
