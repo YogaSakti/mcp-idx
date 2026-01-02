@@ -194,6 +194,14 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                     # NaN guard: pastikan semua nilai valid
                     if (adx_value is not None and plus_di is not None and minus_di is not None and
                         pd.notna(adx_value) and pd.notna(plus_di) and pd.notna(minus_di)):
+                        
+                        # CRITICAL FIX: Clamp values to valid 0-100 range
+                        # ADX, +DI, -DI should theoretically be 0-100
+                        # Values >100 indicate calculation issues with pandas_ta
+                        adx_value = min(max(float(adx_value), 0), 100)
+                        plus_di = min(max(float(plus_di), 0), 100)
+                        minus_di = min(max(float(minus_di), 0), 100)
+                        
                         # Interpret trend strength based on ADX value
                         if adx_value > 25:
                             trend_strength = "strong"
@@ -206,9 +214,9 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                         trend_direction = "bullish" if plus_di > minus_di else "bearish"
 
                         result["adx"] = {
-                            "value": round(float(adx_value), 2),
-                            "plus_di": round(float(plus_di), 2),
-                            "minus_di": round(float(minus_di), 2),
+                            "value": round(adx_value, 2),
+                            "plus_di": round(plus_di, 2),
+                            "minus_di": round(minus_di, 2),
                             "trend_strength": trend_strength,
                             "trend_direction": trend_direction,
                         }
@@ -228,45 +236,63 @@ def calculate_indicators(df: pd.DataFrame, indicators: List[str]) -> Dict[str, A
                         senkou_b = hist_df['ISB_26'].iloc[-1]  # Senkou Span B (Leading Span B)
 
                         current_price = close.iloc[-1]
+                        
+                        # CRITICAL FIX: Check for NaN values before proceeding
+                        # Ichimoku requires 52 bars minimum for complete calculation
+                        # Senkou Span B especially needs 52 bars and is often NaN
+                        tenkan_valid = pd.notna(tenkan)
+                        kijun_valid = pd.notna(kijun)
+                        senkou_a_valid = pd.notna(senkou_a)
+                        senkou_b_valid = pd.notna(senkou_b)
+                        
+                        # At minimum need tenkan and kijun for TK cross analysis
+                        if tenkan_valid and kijun_valid:
+                            # TK Cross (Tenkan-Kijun crossover) - always available if tenkan/kijun valid
+                            tk_cross = "bullish" if tenkan > kijun else "bearish"
+                            
+                            # Cloud analysis - only if both spans available
+                            if senkou_a_valid and senkou_b_valid:
+                                cloud_color = "bullish" if senkou_a > senkou_b else "bearish"
+                                cloud_top = max(senkou_a, senkou_b)
+                                cloud_bottom = min(senkou_a, senkou_b)
 
-                        # Cloud interpretation
-                        cloud_color = "bullish" if senkou_a > senkou_b else "bearish"
-                        cloud_top = max(senkou_a, senkou_b)
-                        cloud_bottom = min(senkou_a, senkou_b)
+                                # Price vs Cloud position
+                                if current_price > cloud_top:
+                                    price_vs_cloud = "above"
+                                elif current_price < cloud_bottom:
+                                    price_vs_cloud = "below"
+                                else:
+                                    price_vs_cloud = "inside"
+                                    
+                                # Overall signal (full analysis)
+                                if tenkan > kijun and price_vs_cloud == "above" and cloud_color == "bullish":
+                                    signal = "strong_bullish"
+                                elif tenkan < kijun and price_vs_cloud == "below" and cloud_color == "bearish":
+                                    signal = "strong_bearish"
+                                elif price_vs_cloud == "above":
+                                    signal = "bullish"
+                                elif price_vs_cloud == "below":
+                                    signal = "bearish"
+                                else:
+                                    signal = "neutral"
+                            else:
+                                # Partial data - only TK cross available, use price vs kijun for cloud substitute
+                                cloud_color = "unknown"
+                                price_vs_cloud = "above" if current_price > kijun else "below" if current_price < kijun else "at"
+                                signal = "bullish" if tk_cross == "bullish" and price_vs_cloud == "above" else \
+                                         "bearish" if tk_cross == "bearish" and price_vs_cloud == "below" else "neutral"
 
-                        # Price vs Cloud position
-                        if current_price > cloud_top:
-                            price_vs_cloud = "above"
-                        elif current_price < cloud_bottom:
-                            price_vs_cloud = "below"
-                        else:
-                            price_vs_cloud = "inside"
-
-                        # TK Cross (Tenkan-Kijun crossover)
-                        tk_cross = "bullish" if tenkan > kijun else "bearish"
-
-                        # Overall signal
-                        if tenkan > kijun and price_vs_cloud == "above" and cloud_color == "bullish":
-                            signal = "strong_bullish"
-                        elif tenkan < kijun and price_vs_cloud == "below" and cloud_color == "bearish":
-                            signal = "strong_bearish"
-                        elif price_vs_cloud == "above":
-                            signal = "bullish"
-                        elif price_vs_cloud == "below":
-                            signal = "bearish"
-                        else:
-                            signal = "neutral"
-
-                        result["ichimoku"] = {
-                            "tenkan_sen": round(float(tenkan), 2),
-                            "kijun_sen": round(float(kijun), 2),
-                            "senkou_span_a": round(float(senkou_a), 2),
-                            "senkou_span_b": round(float(senkou_b), 2),
-                            "cloud_color": cloud_color,
-                            "price_vs_cloud": price_vs_cloud,
-                            "tk_cross": tk_cross,
-                            "signal": signal,
-                        }
+                            result["ichimoku"] = {
+                                "tenkan_sen": round(float(tenkan), 2),
+                                "kijun_sen": round(float(kijun), 2),
+                                "senkou_span_a": round(float(senkou_a), 2) if senkou_a_valid else None,
+                                "senkou_span_b": round(float(senkou_b), 2) if senkou_b_valid else None,
+                                "cloud_color": cloud_color,
+                                "price_vs_cloud": price_vs_cloud,
+                                "tk_cross": tk_cross,
+                                "signal": signal,
+                                "data_complete": senkou_a_valid and senkou_b_valid,
+                            }
 
         except Exception:
             # Skip indicators that fail to calculate

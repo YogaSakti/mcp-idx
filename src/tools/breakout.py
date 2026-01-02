@@ -3,6 +3,7 @@
 from typing import Any, Dict
 import pandas as pd
 import numpy as np
+import pandas_ta as ta
 from mcp.types import Tool
 from src.utils.yahoo import yahoo_client, YahooFinanceError
 from src.utils.validators import validate_ticker, validate_period
@@ -41,13 +42,37 @@ def get_breakout_detection_tool() -> Tool:
     )
 
 
-def find_consolidation_range(df: pd.DataFrame, lookback: int = 20) -> Dict[str, Any]:
+def calculate_atr(df: pd.DataFrame, period: int = 14) -> float:
+    """
+    Calculate ATR (Average True Range) for the given data.
+    
+    Args:
+        df: DataFrame with High, Low, Close columns
+        period: ATR period (default: 14)
+        
+    Returns:
+        Current ATR value
+    """
+    if df.empty or len(df) < period:
+        return 0.0
+    
+    atr = ta.atr(df['High'], df['Low'], df['Close'], length=period)
+    if atr is None or atr.empty:
+        return 0.0
+    
+    atr_value = atr.iloc[-1]
+    return float(atr_value) if pd.notna(atr_value) else 0.0
+
+
+def find_consolidation_range(df: pd.DataFrame, lookback: int = 20, atr: float = 0.0) -> Dict[str, Any]:
     """
     Find consolidation range (support and resistance levels).
+    Uses ATR-based threshold for consolidation detection.
     
     Args:
         df: DataFrame with OHLCV data
         lookback: Number of days to look back
+        atr: Current ATR value for volatility-adjusted thresholds
         
     Returns:
         Dictionary with support, resistance, and range info
@@ -65,8 +90,20 @@ def find_consolidation_range(df: pd.DataFrame, lookback: int = 20) -> Dict[str, 
     # Average price in range
     avg_price = float(recent['Close'].mean())
     
-    # Check if truly consolidating (range < 15% is considered consolidation)
-    is_consolidating = range_pct < 15
+    # ATR-based consolidation detection
+    # If range is less than 3x ATR, it's consolidating (tight range relative to volatility)
+    # This adapts to each stock's volatility:
+    # - Low volatility stock (1% ATR): consolidation if range < 3%
+    # - High volatility stock (5% ATR): consolidation if range < 15%
+    if atr > 0 and avg_price > 0:
+        atr_percent = (atr / avg_price) * 100
+        consolidation_threshold_pct = atr_percent * 3  # Range should be < 3x ATR%
+        is_consolidating = range_pct < consolidation_threshold_pct
+        consolidation_threshold = consolidation_threshold_pct
+    else:
+        # Fallback to fixed 15% if ATR not available
+        is_consolidating = range_pct < 15
+        consolidation_threshold = 15.0
     
     # Find pivot points within the range
     pivot_highs = []
@@ -100,23 +137,27 @@ def find_consolidation_range(df: pd.DataFrame, lookback: int = 20) -> Dict[str, 
         "range_pct": round(range_pct, 2),
         "avg_price": round(avg_price, 2),
         "is_consolidating": is_consolidating,
+        "consolidation_threshold_pct": round(consolidation_threshold, 2),
         "pivot_highs_count": len(pivot_highs),
         "pivot_lows_count": len(pivot_lows),
     }
 
 
 def detect_breakout(
-    df: pd.DataFrame, 
+    df: pd.DataFrame,
     consolidation: Dict[str, Any],
-    volume_threshold: float = 1.5
+    volume_threshold: float = 1.5,
+    atr: float = 0.0
 ) -> Dict[str, Any]:
     """
     Detect if a breakout has occurred.
+    Uses ATR-based thresholds for breakout strength and stop loss.
     
     Args:
         df: DataFrame with OHLCV data
         consolidation: Consolidation range info
         volume_threshold: Volume multiplier for confirmation
+        atr: Current ATR value for volatility-adjusted thresholds
         
     Returns:
         Dictionary with breakout detection results
@@ -143,43 +184,78 @@ def detect_breakout(
     breakout_type = None
     breakout_price = None
     breakout_strength = "none"
+    atr_multiple = 0.0
+    
+    # ATR-based testing threshold (within 0.5 ATR of level)
+    # Fallback to 1% if ATR not available
+    if atr > 0:
+        testing_threshold = atr * 0.5
+    else:
+        testing_threshold = resistance * 0.01  # 1% fallback
     
     # Resistance breakout (bullish)
     if current_close > resistance:
         breakout_type = "resistance_breakout"
         breakout_price = resistance
         
-        # Calculate strength based on how far above resistance
-        pct_above = ((current_close - resistance) / resistance) * 100
-        if pct_above > 3 and volume_confirmed:
-            breakout_strength = "strong"
-        elif pct_above > 1 or volume_confirmed:
-            breakout_strength = "moderate"
+        # Calculate strength based on ATR (volatility-adjusted)
+        breakout_distance = current_close - resistance
+        
+        if atr > 0:
+            atr_multiple = breakout_distance / atr
+            # Strong: >= 1 ATR above resistance with volume
+            # Moderate: >= 0.5 ATR above OR volume confirmed
+            # Weak: < 0.5 ATR and no volume
+            if atr_multiple >= 1.0 and volume_confirmed:
+                breakout_strength = "strong"
+            elif atr_multiple >= 0.5 or volume_confirmed:
+                breakout_strength = "moderate"
+            else:
+                breakout_strength = "weak"
         else:
-            breakout_strength = "weak"
+            # Fallback to percentage-based if ATR not available
+            pct_above = ((current_close - resistance) / resistance) * 100
+            if pct_above > 3 and volume_confirmed:
+                breakout_strength = "strong"
+            elif pct_above > 1 or volume_confirmed:
+                breakout_strength = "moderate"
+            else:
+                breakout_strength = "weak"
             
     # Support breakdown (bearish)
     elif current_close < support:
         breakout_type = "support_breakdown"
         breakout_price = support
         
-        # Calculate strength based on how far below support
-        pct_below = ((support - current_close) / support) * 100
-        if pct_below > 3 and volume_confirmed:
-            breakout_strength = "strong"
-        elif pct_below > 1 or volume_confirmed:
-            breakout_strength = "moderate"
+        # Calculate strength based on ATR (volatility-adjusted)
+        breakdown_distance = support - current_close
+        
+        if atr > 0:
+            atr_multiple = breakdown_distance / atr
+            if atr_multiple >= 1.0 and volume_confirmed:
+                breakout_strength = "strong"
+            elif atr_multiple >= 0.5 or volume_confirmed:
+                breakout_strength = "moderate"
+            else:
+                breakout_strength = "weak"
         else:
-            breakout_strength = "weak"
+            # Fallback to percentage-based
+            pct_below = ((support - current_close) / support) * 100
+            if pct_below > 3 and volume_confirmed:
+                breakout_strength = "strong"
+            elif pct_below > 1 or volume_confirmed:
+                breakout_strength = "moderate"
+            else:
+                breakout_strength = "weak"
             
-    # Testing resistance (potential breakout)
-    elif current_high >= resistance * 0.99:  # Within 1% of resistance
+    # Testing resistance (potential breakout) - within 0.5 ATR
+    elif current_high >= resistance - testing_threshold:
         breakout_type = "testing_resistance"
         breakout_price = resistance
         breakout_strength = "pending"
         
-    # Testing support (potential breakdown)
-    elif current_low <= support * 1.01:  # Within 1% of support
+    # Testing support (potential breakdown) - within 0.5 ATR
+    elif current_low <= support + testing_threshold:
         breakout_type = "testing_support"
         breakout_price = support
         breakout_strength = "pending"
@@ -195,6 +271,13 @@ def detect_breakout(
     targets = {}
     stop_loss = None
     
+    # ATR-based stop loss multiplier (1.5x ATR is standard for breakout trades)
+    # Fallback to 2% if ATR not available
+    if atr > 0:
+        stop_distance = atr * 1.5
+    else:
+        stop_distance = None  # Will use percentage fallback
+    
     if breakout_type == "resistance_breakout":
         # Target: range projection above breakout
         targets = {
@@ -202,7 +285,11 @@ def detect_breakout(
             "target_2": round(resistance + range_size, 2),           # 100% of range
             "target_3": round(resistance + (range_size * 1.618), 2), # 161.8% of range
         }
-        stop_loss = round(resistance * 0.98, 2)  # 2% below breakout level
+        # ATR-based stop loss: 1.5x ATR below breakout level
+        if stop_distance:
+            stop_loss = round(resistance - stop_distance, 2)
+        else:
+            stop_loss = round(resistance * 0.98, 2)  # 2% fallback
         
     elif breakout_type == "support_breakdown":
         # Target: range projection below breakdown
@@ -211,7 +298,11 @@ def detect_breakout(
             "target_2": round(support - range_size, 2),
             "target_3": round(support - (range_size * 1.618), 2),
         }
-        stop_loss = round(support * 1.02, 2)  # 2% above breakdown level
+        # ATR-based stop loss: 1.5x ATR above breakdown level
+        if stop_distance:
+            stop_loss = round(support + stop_distance, 2)
+        else:
+            stop_loss = round(support * 1.02, 2)  # 2% fallback
         
     elif breakout_type == "testing_resistance":
         targets = {
@@ -242,6 +333,7 @@ def detect_breakout(
         "breakout_type": breakout_type,
         "breakout_price": breakout_price,
         "breakout_strength": breakout_strength,
+        "atr_multiple": round(atr_multiple, 2) if atr_multiple > 0 else None,
         "current_price": round(current_close, 2),
         "volume_ratio": round(volume_ratio, 2),
         "volume_confirmed": volume_confirmed,
@@ -249,6 +341,7 @@ def detect_breakout(
         "current_volume": round(current_volume, 0),
         "targets": targets,
         "stop_loss": stop_loss,
+        "stop_loss_method": "ATR-based (1.5x ATR)" if atr > 0 else "Percentage-based (2%)",
         "risk_reward_ratio": risk_reward,
     }
 
@@ -416,11 +509,14 @@ async def get_breakout_detection(arguments: dict) -> Dict[str, Any]:
                 f"Insufficient data for {ticker}. Need {min_bars} bars, got {len(df)}"
             )
         
-        # Find consolidation range
-        consolidation = find_consolidation_range(df, lookback)
+        # Calculate ATR for volatility-adjusted thresholds
+        atr = calculate_atr(df, period=14)
         
-        # Detect breakout
-        breakout = detect_breakout(df, consolidation, volume_threshold)
+        # Find consolidation range with ATR-based threshold
+        consolidation = find_consolidation_range(df, lookback, atr)
+        
+        # Detect breakout with ATR-based thresholds
+        breakout = detect_breakout(df, consolidation, volume_threshold, atr)
         
         # Check for false breakout warnings
         false_breakout = check_false_breakout(df, consolidation)
@@ -481,6 +577,10 @@ async def get_breakout_detection(arguments: dict) -> Dict[str, Any]:
             "false_breakout_check": false_breakout,
             "signal": signal_result,
             "insights": insights,
+            "atr_info": {
+                "atr_14": round(atr, 2) if atr > 0 else None,
+                "atr_percent": round((atr / float(current['Close'])) * 100, 2) if atr > 0 and float(current['Close']) > 0 else None,
+            },
             "parameters": {
                 "lookback_days": lookback,
                 "volume_threshold": volume_threshold,

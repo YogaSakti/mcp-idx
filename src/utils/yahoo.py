@@ -37,6 +37,63 @@ class YahooFinanceClient:
         formatted_ticker = format_ticker(ticker)
         return yf.Ticker(formatted_ticker, session=None)
 
+    def _sanitize_ratio(self, value, max_val: float = 100) -> Optional[float]:
+        """
+        Sanitize financial ratios to catch Yahoo Finance data errors.
+        
+        Some IDX stocks return wildly incorrect P/B, P/S ratios (e.g., 11878)
+        due to unit/currency scaling issues in Yahoo's data.
+        
+        Args:
+            value: Raw ratio value
+            max_val: Maximum reasonable value (default 100)
+            
+        Returns:
+            Sanitized value or None if invalid
+        """
+        if value is None or value == 0:
+            return None
+        
+        try:
+            ratio = round(float(value), 2)
+            # Catch obviously wrong values
+            if ratio < 0 or ratio > max_val:
+                return None  # Return None for impossible values
+            return ratio
+        except (TypeError, ValueError):
+            return None
+    
+    def _sanitize_percentage(self, value, is_decimal: bool = True, max_val: float = 100) -> Optional[float]:
+        """
+        Sanitize percentage values (like dividend yield, profit margin).
+        
+        Yahoo Finance sometimes returns these as decimals (0.05 = 5%)
+        and sometimes as already-percentages. Also catches impossible values.
+        
+        Args:
+            value: Raw value
+            is_decimal: If True, multiply by 100 to convert to percentage
+            max_val: Maximum reasonable percentage
+            
+        Returns:
+            Sanitized percentage or None if invalid
+        """
+        if value is None or value == 0:
+            return None
+        
+        try:
+            pct = float(value)
+            if is_decimal:
+                pct = pct * 100
+            pct = round(pct, 2)
+            
+            # Catch obviously wrong values
+            if pct < 0 or pct > max_val:
+                return None  # Return None for impossible values
+            return pct
+        except (TypeError, ValueError):
+            return None
+
     def get_current_price(self, ticker: str) -> Dict[str, Any]:
         """
         Get current stock price and basic info.
@@ -191,24 +248,18 @@ class YahooFinanceClient:
                 "enterprise_value": info.get("enterpriseValue") or None,
                 "shares_outstanding": info.get("sharesOutstanding") or None,
                 "financials": {
-                    "pe_ratio": round(info.get("trailingPE", 0), 2) or None,
-                    "pb_ratio": round(info.get("priceToBook", 0), 2) or None,
-                    "ps_ratio": round(info.get("priceToSalesTrailing12Months", 0), 2) or None,
+                    "pe_ratio": self._sanitize_ratio(info.get("trailingPE"), max_val=1000),
+                    "pb_ratio": self._sanitize_ratio(info.get("priceToBook"), max_val=100),
+                    "ps_ratio": self._sanitize_ratio(info.get("priceToSalesTrailing12Months"), max_val=100),
                     "eps": round(info.get("trailingEps", 0), 2) or None,
                     "revenue": info.get("totalRevenue") or None,
                     "net_income": info.get("netIncomeToCommon") or None,
-                    "profit_margin": round(
-                        info.get("profitMargins", 0) * 100, 2
-                    ) if info.get("profitMargins") else None,
+                    "profit_margin": self._sanitize_percentage(info.get("profitMargins"), is_decimal=True, max_val=100),
                 },
                 "dividends": {
-                    "dividend_yield": round(
-                        info.get("dividendYield", 0) * 100, 2
-                    ) if info.get("dividendYield") else None,
+                    "dividend_yield": self._sanitize_percentage(info.get("dividendYield"), is_decimal=True, max_val=50),
                     "dividend_rate": round(info.get("dividendRate", 0), 2) or None,
-                    "payout_ratio": round(
-                        info.get("payoutRatio", 0) * 100, 2
-                    ) if info.get("payoutRatio") else None,
+                    "payout_ratio": self._sanitize_percentage(info.get("payoutRatio"), is_decimal=True, max_val=150),
                     "ex_dividend_date": (
                         datetime.fromtimestamp(info["exDividendDate"]).strftime("%Y-%m-%d")
                         if info.get("exDividendDate") else None

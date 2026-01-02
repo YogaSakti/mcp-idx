@@ -36,6 +36,11 @@ from src.tools.fundamental import (
 )
 from src.tools.breakout import get_breakout_detection_tool, get_breakout_detection
 from src.tools.divergence import get_divergence_detection_tool, get_divergence_detection
+from src.tools.intraday import (
+    get_vwap_tool, get_vwap,
+    get_pivot_points_tool, get_pivot_points,
+    get_gap_analysis_tool, get_gap_analysis
+)
 from src.config.settings import settings
 
 # Configure logging
@@ -82,6 +87,10 @@ async def handle_list_tools() -> list[Tool]:
         get_dividend_history_tool(),
         get_breakout_detection_tool(),
         get_divergence_detection_tool(),
+        # Intraday tools
+        get_vwap_tool(),
+        get_pivot_points_tool(),
+        get_gap_analysis_tool(),
     ]
 @server.call_tool()
 async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
@@ -114,6 +123,10 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent]:
             "get_dividend_history": get_dividend_history,
             "get_breakout_detection": get_breakout_detection,
             "get_divergence_detection": get_divergence_detection,
+            # Intraday tools
+            "get_vwap": get_vwap,
+            "get_pivot_points": get_pivot_points,
+            "get_gap_analysis": get_gap_analysis,
         }
         
         handler = tool_handlers.get(name)
